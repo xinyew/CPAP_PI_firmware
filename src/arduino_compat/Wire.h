@@ -46,6 +46,7 @@ private:
 // Virtual MUX instances
 extern TwoWire Wire0; // MUX Channel 0
 extern TwoWire Wire1; // MUX Channel 1
+extern TwoWire Wire;  // Dummy for legacy default arguments
 
 #endif /* __cplusplus */
 

@@ -6,6 +6,7 @@ LOG_MODULE_REGISTER(wire_compat, LOG_LEVEL_INF);
 
 TwoWire Wire0(DEVICE_DT_GET(DT_NODELABEL(mux_i2c0)));
 TwoWire Wire1(DEVICE_DT_GET(DT_NODELABEL(mux_i2c1)));
+TwoWire Wire(NULL); // Dummy for legacy default arguments
 
 TwoWire::TwoWire(const struct device *dev) : i2c_dev(dev), txLength(0), rxIndex(0), rxLength(0) {}
 

@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <math.h>
 #include <zephyr/kernel.h>
 
 #ifdef __cplusplus
@@ -18,6 +19,10 @@ typedef uint8_t byte;
 
 #ifndef max
 #define max(a,b) ((a)>(b)?(a):(b))
+#endif
+
+#ifndef constrain
+#define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
 #endif
 
 static inline uint32_t millis(void) {
