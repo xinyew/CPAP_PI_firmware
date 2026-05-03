@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Generic interface for sensors.
  */
@@ -16,5 +20,9 @@ typedef struct {
 
 int sensor_manager_init(void);
 void sensor_manager_poll(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SENSOR_MANAGER_H */

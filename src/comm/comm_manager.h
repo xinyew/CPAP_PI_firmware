@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Generic interface for communication methods.
  */
@@ -15,5 +19,9 @@ typedef struct {
 
 int comm_manager_init(void);
 void comm_manager_broadcast(const char *data, size_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* COMM_MANAGER_H */
