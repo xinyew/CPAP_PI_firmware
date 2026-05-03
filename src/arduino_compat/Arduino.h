@@ -12,6 +12,14 @@ extern "C" {
 typedef bool boolean;
 typedef uint8_t byte;
 
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
+
+#ifndef max
+#define max(a,b) ((a)>(b)?(a):(b))
+#endif
+
 static inline uint32_t millis(void) {
     return k_uptime_get_32();
 }

@@ -16,7 +16,7 @@ target_sources(app PRIVATE
     src/sensors/sensor_manager.c
     src/sensors/max30101/max30101_reader.cpp
     src/sensors/max30101/EmotiBit_MAX30101/src/MAX30105.cpp
-    src/sensors/max30101/EmotiBit_MAX30101/src/spo2_algorithm.cpp
-    src/sensors/max30101/EmotiBit_MAX30101/src/heartRate.cpp
     src/comm/comm_manager.c
 )
+
+target_compile_definitions(app PRIVATE ARDUINO=100)
