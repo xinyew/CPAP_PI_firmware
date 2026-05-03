@@ -3,12 +3,13 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <zephyr/device.h>
 
 #ifdef __cplusplus
 
 class TwoWire {
 public:
-    TwoWire();
+    TwoWire(const struct device *dev);
     
     // Config
     void begin();
@@ -31,6 +32,8 @@ public:
     int read(void);
 
 private:
+    const struct device *i2c_dev;
+    
     uint8_t txAddress;
     uint8_t txBuffer[32];
     size_t txLength;
@@ -40,7 +43,9 @@ private:
     size_t rxLength;
 };
 
-extern TwoWire Wire;
+// Virtual MUX instances
+extern TwoWire Wire0; // MUX Channel 0
+extern TwoWire Wire1; // MUX Channel 1
 
 #endif /* __cplusplus */
 

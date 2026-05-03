@@ -7,6 +7,7 @@ target_include_directories(app PRIVATE
     src
     src/arduino_compat
     src/sensors/max30101/EmotiBit_MAX30101/src
+    src/sensors/sht40/MR01Right_SHT40/src
 )
 
 target_sources(app PRIVATE 
@@ -16,6 +17,8 @@ target_sources(app PRIVATE
     src/sensors/sensor_manager.c
     src/sensors/max30101/max30101_reader.cpp
     src/sensors/max30101/EmotiBit_MAX30101/src/MAX30105.cpp
+    src/sensors/sht40/sht40_reader.cpp
+    src/sensors/sht40/MR01Right_SHT40/src/SHT40.cpp
     src/comm/comm_manager.c
 )
 

@@ -42,6 +42,17 @@
 				irq-gpios = <&gpio1 13 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 			};
 		};
+
+		mux_i2c1: i2c-mux-channel@1 {
+			reg = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			sht40: sht40@44 {
+				compatible = "arduino,sht40";
+				reg = <0x44>;
+			};
+		};
 	};
 };
 

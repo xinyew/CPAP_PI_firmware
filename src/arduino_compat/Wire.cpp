@@ -4,9 +4,10 @@
 
 LOG_MODULE_REGISTER(wire_compat, LOG_LEVEL_INF);
 
-TwoWire Wire;
+TwoWire Wire0(DEVICE_DT_GET(DT_NODELABEL(mux_i2c0)));
+TwoWire Wire1(DEVICE_DT_GET(DT_NODELABEL(mux_i2c1)));
 
-TwoWire::TwoWire() : txLength(0), rxIndex(0), rxLength(0) {}
+TwoWire::TwoWire(const struct device *dev) : i2c_dev(dev), txLength(0), rxIndex(0), rxLength(0) {}
 
 void TwoWire::begin() {
     // Zephyr I2C is initialized via DeviceTree automatically
@@ -43,7 +44,6 @@ uint8_t TwoWire::endTransmission(void) {
 
 uint8_t TwoWire::endTransmission(uint8_t stop) {
     if (stop) {
-        const struct device *i2c_dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
         if (!device_is_ready(i2c_dev)) return 4;
         
         int err = i2c_write(i2c_dev, txBuffer, txLength, txAddress);
@@ -62,7 +62,6 @@ uint8_t TwoWire::requestFrom(uint8_t address, uint8_t quantity) {
 }
 
 uint8_t TwoWire::requestFrom(uint8_t address, uint8_t quantity, uint8_t sendStop) {
-    const struct device *i2c_dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
     if (!device_is_ready(i2c_dev)) return 0;
     
     if (quantity > sizeof(rxBuffer)) quantity = sizeof(rxBuffer);

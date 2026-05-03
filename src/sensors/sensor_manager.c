@@ -3,11 +3,13 @@
 
 #include "sensors/sensor_manager.h"
 #include "sensors/max30101/max30101_reader.h"
+#include "sensors/sht40/sht40_reader.h"
 
 LOG_MODULE_REGISTER(sensor_manager, LOG_LEVEL_INF);
 
 static sensor_interface_t *sensors[] = {
     &max30101_sensor,
+    &sht40_sensor,
 };
 
 #define NUM_SENSORS (sizeof(sensors) / sizeof(sensors[0]))

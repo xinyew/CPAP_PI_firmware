@@ -18,7 +18,7 @@ static int max30101_init(void)
     LOG_INF("Initializing MAX30101 using EmotiBit Library...");
 
     // Initialize sensor
-    if (!particleSensor.begin(Wire, I2C_SPEED_STANDARD, MAX30105_ADDRESS)) {
+    if (!particleSensor.begin(Wire0, I2C_SPEED_STANDARD, MAX30105_ADDRESS)) {
         LOG_ERR("MAX30101 was not found. Please check wiring/power.");
         return -ENODEV;
     }
