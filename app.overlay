@@ -37,11 +37,9 @@
 			#size-cells = <0>;
 
 			max30101: max30101@57 {
-				compatible = "maxim,max30101";
+				compatible = "emotibit,max30101";
 				reg = <0x57>;
 				irq-gpios = <&gpio1 13 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
-				acq-mode = "multi-led";
-				led-slot = <1 2 3 0>;
 			};
 		};
 	};

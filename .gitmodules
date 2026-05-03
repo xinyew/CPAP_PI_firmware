@@ -1,0 +1,3 @@
+[submodule "src/sensors/max30101/EmotiBit_MAX30101"]
+	path = src/sensors/max30101/EmotiBit_MAX30101
+	url = https://github.com/EmotiBit/EmotiBit_MAX30101.git

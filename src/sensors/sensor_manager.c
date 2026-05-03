@@ -2,7 +2,7 @@
 #include <zephyr/logging/log.h>
 
 #include "sensors/sensor_manager.h"
-#include "sensors/max30101_reader.h"
+#include "sensors/max30101/max30101_reader.h"
 
 LOG_MODULE_REGISTER(sensor_manager, LOG_LEVEL_INF);
 
