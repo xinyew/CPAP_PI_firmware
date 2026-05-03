@@ -11,46 +11,50 @@ LOG_MODULE_REGISTER(max30101_reader, LOG_LEVEL_INF);
 
 static const struct device *max30101_dev = DEVICE_DT_GET_ANY(maxim_max30101);
 
+static void max30101_trigger_handler(const struct device *dev, const struct sensor_trigger *trig)
+{
+    struct sensor_value red, ir, green;
+    char buf[128];
+
+    if (sensor_sample_fetch(dev) < 0) {
+        LOG_ERR("Failed to fetch MAX30101 sample in trigger");
+        return;
+    }
+
+    sensor_channel_get(dev, SENSOR_CHAN_RED, &red);
+    sensor_channel_get(dev, SENSOR_CHAN_IR, &ir);
+    sensor_channel_get(dev, SENSOR_CHAN_GREEN, &green);
+
+    snprintf(buf, sizeof(buf), "MAX30101 [IRQ]: Red %d, IR %d, Green %d",
+             red.val1, ir.val1, green.val1);
+    
+    comm_manager_broadcast(buf, strlen(buf));
+}
+
 static int max30101_init(void)
 {
     if (!device_is_ready(max30101_dev)) {
         LOG_ERR("MAX30101 device not ready");
         return -ENODEV;
     }
-    return 0;
-}
 
-static int max30101_read(void)
-{
-    struct sensor_value red, ir, green;
-    int ret;
-    char buf[128];
+    struct sensor_trigger trig = {
+        .type = SENSOR_TRIG_DATA_READY,
+        .chan = SENSOR_CHAN_ALL,
+    };
 
-    ret = sensor_sample_fetch(max30101_dev);
-    if (ret) {
-        LOG_ERR("Failed to fetch MAX30101 sample (err: %d)", ret);
-        return ret;
+    if (sensor_trigger_set(max30101_dev, &trig, max30101_trigger_handler) < 0) {
+        LOG_ERR("Could not configure MAX30101 trigger");
+        return -EIO;
     }
 
-    sensor_channel_get(max30101_dev, SENSOR_CHAN_RED, &red);
-    sensor_channel_get(max30101_dev, SENSOR_CHAN_IR, &ir);
-    sensor_channel_get(max30101_dev, SENSOR_CHAN_GREEN, &green);
-
-    snprintf(buf, sizeof(buf), "MAX30101: Red %d, IR %d, Green %d",
-             red.val1, ir.val1, green.val1);
-    
-    comm_manager_broadcast(buf, strlen(buf));
+    LOG_INF("MAX30101 trigger configured successfully.");
     return 0;
-}
-
-static uint32_t max30101_get_interval(void)
-{
-    return 1000; /* 1 second */
 }
 
 sensor_interface_t max30101_sensor = {
     .name = "MAX30101",
     .init = max30101_init,
-    .read = max30101_read,
-    .get_interval_ms = max30101_get_interval,
+    .read = NULL,
+    .get_interval_ms = NULL,
 };
