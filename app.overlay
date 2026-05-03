@@ -1,0 +1,55 @@
+/* CPAP PI Firmware DeviceTree Overlay (Phase 1: MAX30101) */
+
+&pinctrl {
+	i2c0_default: i2c0_default {
+		group1 {
+			psels = <NRF_PSEL(TWIM_SDA, 0, 27)>,
+				<NRF_PSEL(TWIM_SCL, 0, 26)>;
+		};
+	};
+	i2c0_sleep: i2c0_sleep {
+		group1 {
+			psels = <NRF_PSEL(TWIM_SDA, 0, 27)>,
+				<NRF_PSEL(TWIM_SCL, 0, 26)>;
+			low-power-enable;
+		};
+	};
+};
+
+&i2c0 {
+	status = "okay";
+	pinctrl-0 = <&i2c0_default>;
+	pinctrl-1 = <&i2c0_sleep>;
+	pinctrl-names = "default", "sleep";
+
+	tca9548a: tca9548a@70 {
+		compatible = "ti,tca9548";
+		reg = <0x70>;
+		reset-gpios = <&gpio0 2 GPIO_ACTIVE_LOW>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		mux_i2c0: i2c-mux-channel@0 {
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			max30101: max30101@57 {
+				compatible = "maxim,max30101";
+				reg = <0x57>;
+				irq-gpios = <&gpio1 13 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+				acq-mode = "multi-led";
+				led-slot = <1 2 3 0>;
+			};
+		};
+	};
+};
+
+/ {
+	zephyr,user {
+		/* MUX Address pins */
+		mux-a0-gpios = <&gpio1 11 GPIO_ACTIVE_HIGH>;
+		mux-a1-gpios = <&gpio1 15 GPIO_ACTIVE_HIGH>;
+		mux-a2-gpios = <&gpio1 14 GPIO_ACTIVE_HIGH>;
+	};
+};
