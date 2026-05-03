@@ -32,6 +32,7 @@
 		#size-cells = <0>;
 
 		mux_i2c0: i2c-mux-channel@0 {
+			compatible = "ti,tca9548a-channel";
 			reg = <0>;
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -44,6 +45,7 @@
 		};
 
 		mux_i2c1: i2c-mux-channel@1 {
+			compatible = "ti,tca9548a-channel";
 			reg = <1>;
 			#address-cells = <1>;
 			#size-cells = <0>;
