@@ -19,6 +19,7 @@ target_sources(app PRIVATE
     src/sensors/max30101/EmotiBit_MAX30101/src/MAX30105.cpp
     src/sensors/sht40/sht40_reader.cpp
     src/sensors/sht40/MR01Right_SHT40/src/SHT40.cpp
+    src/sensors/ess102/ess102_reader.c
     src/comm/comm_manager.c
 )
 

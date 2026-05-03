@@ -64,5 +64,24 @@
 		mux-a0-gpios = <&gpio1 11 GPIO_ACTIVE_HIGH>;
 		mux-a1-gpios = <&gpio1 15 GPIO_ACTIVE_HIGH>;
 		mux-a2-gpios = <&gpio1 14 GPIO_ACTIVE_HIGH>;
+		
+		/* Expose ADC channel for easy access */
+		io-channels = <&adc 0>;
+	};
+};
+
+&adc {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	channel@0 {
+		reg = <0>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,input-positive = <NRF_SAADC_AIN0>; /* P0.02 - Sensor Output */
+		zephyr,input-negative = <NRF_SAADC_AIN1>; /* P0.03 - 0.3V Reference */
+		zephyr,resolution = <12>;
 	};
 };
