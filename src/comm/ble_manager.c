@@ -1,6 +1,7 @@
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/uuid.h>
 #include <zephyr/bluetooth/gatt.h>
+#include <zephyr/bluetooth/gap.h>
 #include <bluetooth/services/nus.h>
 #include <zephyr/logging/log.h>
 
@@ -45,7 +46,18 @@ static void bt_ready(int err)
 
     LOG_INF("Bluetooth initialized");
 
-    err = bt_le_adv_start(BT_LE_ADV_CONN, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
+    // Use explicit parameter structure for maximum compatibility across Zephyr versions
+    struct bt_le_adv_param adv_param = {
+        .id = BT_ID_DEFAULT,
+        .sid = 0,
+        .secondary_max_skip = 0,
+        .options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_USE_NAME,
+        .interval_min = BT_GAP_ADV_FAST_INT_MIN_2,
+        .interval_max = BT_GAP_ADV_FAST_INT_MAX_2,
+        .peer = NULL,
+    };
+
+    err = bt_le_adv_start(&adv_param, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
     if (err) {
         LOG_ERR("Advertising failed to start (err %d)", err);
         return;
@@ -69,7 +81,5 @@ int ble_manager_init(void)
 
 int ble_manager_send(const char *data, size_t len)
 {
-    // NUS send expects a connection object. 
-    // Passing NULL sends to all connected centrals.
     return bt_nus_send(NULL, (const uint8_t *)data, len);
 }
