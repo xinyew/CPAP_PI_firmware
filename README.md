@@ -1,44 +1,58 @@
-# CPAP Pressure Injury Sensing Application
+# CPAP Pressure Injury Sensing Firmware
 
-This is an nRF Connect SDK project for the nRF52840 DK board. 
+This repository contains the firmware for a multi-sensor CPAP pressure injury monitoring system built on the **nRF52840 DK** using the **Zephyr RTOS** (nRF Connect SDK).
 
-## Project Architecture
-This project utilizes a hybrid C/C++ architecture. Core RTOS components (like `sensor_manager` and `comm_manager`) are written in C, while specific sensor drivers leverage mature open-source Arduino C++ libraries.
+## System Overview
 
-We use a custom **Arduino Compatibility Layer** (`src/arduino_compat/`) that implements the Arduino `TwoWire` (`Wire.h`) and `Arduino.h` APIs. This allows standard Arduino C++ libraries to run natively on Zephyr by seamlessly routing their I2C calls into Zephyr's high-speed `i2c_write` and `i2c_read` functions.
+The system monitors three primary physiological and environmental parameters at high frequency (60Hz) to detect early signs of pressure injuries caused by CPAP masks:
+1. **Pulse Oximetry (PPG)**: Heart rate and SpO2 trends via MAX30101.
+2. **Contact Pressure**: Real-time force measurement via ESS102 (Differential ADC).
+3. **Environment**: Micro-climate temperature and humidity via SHT40.
 
-## Hardware Wiring & Connections
+## Key Features
 
-Below is the definitive pin mapping for the nRF52840 DK. All I2C sensors are routed through the TCA9548A multiplexer.
+- **Unified 60Hz Stream**: High-performance JSON reporting cadence optimized for real-time visualization.
+- **Dynamic Comm Switching**: Toggle between **Wired (USB Serial)** and **Wireless (BLE)** at the press of a button.
+- **Dual-Interface Advertising**: Implements the Nordic UART Service (NUS) for seamless browser integration via Web Bluetooth.
+- **Hardware Abstraction**: Handles I2C multiplexing (TCA9548A) and differential analog-to-digital conversion.
 
-| Component | Pin Function | nRF52840 DK Pin | Notes |
-| :--- | :--- | :--- | :--- |
-| **I2C Bus (MUX)** | SDA | `P0.27` | Main I2C Data line to TCA9548A |
-| | SCL | `P0.26` | Main I2C Clock line to TCA9548A |
-| | Reset | `P0.02` | MUX Reset (Active Low) |
-| **MUX Addressing** | A0 | `P1.11` | Forced LOW via Zephyr GPIO |
-| | A1 | `P1.15` | Forced LOW via Zephyr GPIO |
-| | A2 | `P1.14` | Forced LOW via Zephyr GPIO |
-| **MAX30101 (PPG)**| INT | `P1.13` | Interrupt pin (Active Low) |
-| **ESS102 (Force)**| Positive Input | `P0.03` (AIN1) | Sensor Output signal |
-| | Negative Input | `P0.05` (AIN3) | 0.3V External Reference |
+## Hardware Configuration
 
-> [!IMPORTANT]
-> **Force Sensor Differential ADC**: The ESS102 force sensor is connected using a differential ADC measurement because the output signal may fall below the reference voltage. It is critical that the 0.3V reference goes to `P0.05` and the sensor output goes to `P0.03`. **Do not apply voltages below GND directly to any pin, as this will destroy the microcontroller.**
+### Pin Mapping (nRF52840 DK)
+- **I2C SDA/SCL**: P0.27 / P0.26
+- **MUX Reset**: P0.02
+- **MAX30101 IRQ**: P1.13
+- **ESS102 Differential ADC**:
+    - Positive (Input): **AIN1 (P0.03)**
+    - Negative (Ref 0.3V): **AIN3 (P0.05)**
+- **User Interface**:
+    - **Button 1**: Cycle Communication Mode (Serial -> BLE).
+    - **LED 1**: Serial Mode Indicator.
+    - **LED 2**: BLE Mode Indicator.
 
-## Sensor Implementations
+## Getting Started
 
-- **Phase 1: MAX30101 Pulse Oximeter**: 
-  - Behind I2C MUX Channel 0 (Address: 0x57)
-  - Driven by the **EmotiBit MAX30101 C++ Library**.
-  - Configured for Multi-LED (Red, IR, Green) at 50Hz.
-  - The Zephyr built-in driver is disabled (`compatible = "emotibit,max30101"`) to prevent hardware conflicts.
+### Prerequisites
+- nRF Connect SDK (v2.x or v3.x)
+- VS Code with nRF Connect Extension Pack
 
-- **Phase 2: SHT40 Temperature & Humidity**:
-  - Behind I2C MUX Channel 1 (Address: 0x44)
-  - Driven by the **MR01Right SHT40 C++ Library**.
-  - Utilizes our upgraded `Wire1` polyfill, allowing Zephyr to automatically switch MUX channels in the background during I2C reads.
+### Building & Flashing
+1. Open the project in VS Code / nRF Connect.
+2. Create a build configuration for `nrf52840dk/nrf52840`.
+3. Build the project:
+   ```bash
+   west build -b nrf52840dk/nrf52840
+   ```
+4. Flash to your board:
+   ```bash
+   west flash
+   ```
 
-- **Phase 3: ESS102 Force Sensor**:
-  - Connected directly to the nRF52840's internal SAADC.
-  - Configured for 12-bit Differential measurement using the internal 0.6V reference and a 1/4 gain setting.
+## Serial Protocol
+The board emits a compact JSON object at 60Hz:
+```json
+{"r": 1234, "i": 5678, "g": 9012, "f": 450, "t": 24.5, "h": 45.2}
+```
+- `r/i/g`: Red, IR, and Green PPG values.
+- `f`: Force sensor value in mV.
+- `t/h`: Temperature (°C) and Humidity (%).
