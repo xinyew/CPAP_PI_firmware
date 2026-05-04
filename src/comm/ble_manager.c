@@ -1,13 +1,20 @@
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/uuid.h>
 #include <zephyr/bluetooth/gatt.h>
-#include <zephyr/bluetooth/gap.h>
 #include <bluetooth/services/nus.h>
 #include <zephyr/logging/log.h>
 
 #include "ble_manager.h"
 
 LOG_MODULE_REGISTER(ble_manager, LOG_LEVEL_INF);
+
+// Fallback definitions for compatibility with experimental Zephyr versions
+#ifndef BT_LE_ADV_OPT_CONNECTABLE
+#define BT_LE_ADV_OPT_CONNECTABLE BIT(0)
+#endif
+#ifndef BT_LE_ADV_OPT_USE_NAME
+#define BT_LE_ADV_OPT_USE_NAME BIT(1)
+#endif
 
 static const struct bt_data ad[] = {
     BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
@@ -46,7 +53,6 @@ static void bt_ready(int err)
 
     LOG_INF("Bluetooth initialized");
 
-    // Use explicit parameter structure for maximum compatibility across Zephyr versions
     struct bt_le_adv_param adv_param = {
         .id = BT_ID_DEFAULT,
         .sid = 0,
