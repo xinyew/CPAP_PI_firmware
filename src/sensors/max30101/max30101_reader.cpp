@@ -7,7 +7,7 @@
 #include "comm/comm_manager.h"
 #include "MAX30105.h" // EmotiBit Library Header
 
-LOG_MODULE_REGISTER(max30101_reader, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(max30101_reader, LOG_LEVEL_WRN);
 
 MAX30105 particleSensor;
 

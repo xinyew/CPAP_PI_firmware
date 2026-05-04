@@ -7,7 +7,7 @@
 #include "comm/comm_manager.h"
 #include "SHT40.h"
 
-LOG_MODULE_REGISTER(sht40_reader, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(sht40_reader, LOG_LEVEL_WRN);
 
 SHT40 sht40;
 

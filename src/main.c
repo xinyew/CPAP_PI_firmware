@@ -5,7 +5,7 @@
 #include "comm/comm_manager.h"
 #include "sensors/sensor_manager.h"
 
-LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(main, LOG_LEVEL_WRN);
 
 static void scan_i2c(void)
 {
@@ -66,24 +66,17 @@ int main(void)
         LOG_WRN("Some sensors failed to initialize");
     }
 
-    LOG_INF("Initialization Complete. Entering unified 60Hz reporting loop.");
-
-    uint32_t last_report_time = k_uptime_get_32();
-    uint32_t report_interval = 16; // ~60Hz (16ms)
+    LOG_INF("Initialization Complete. Starting 60Hz Timer-based reporting.");
 
     while (1) {
-        // Poll sensors in the background at their individual frequencies
+        // Poll sensors as fast as possible to fill the cache
         sensor_manager_poll();
         
-        // Report unified JSON at exactly 60Hz
-        uint32_t now = k_uptime_get_32();
-        if ((now - last_report_time) >= report_interval) {
-            sensor_manager_report();
-            last_report_time = now;
-        }
-
-        // Sleep 2ms to prevent CPU hogging and allow other threads to run
-        k_msleep(2);
+        // Report unified JSON at exactly 60Hz (driven by k_msleep for now, but tighter)
+        sensor_manager_report();
+        
+        // 1000ms / 60 = 16.66ms. k_msleep(16) is the closest.
+        k_msleep(16);
     }
 
     return 0;

@@ -7,7 +7,7 @@
 #include "sensors/ess102/ess102_reader.h"
 #include "comm/comm_manager.h"
 
-LOG_MODULE_REGISTER(ess102_reader, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(ess102_reader, LOG_LEVEL_WRN);
 
 /* 
  * We fetch the ADC specification from the Devicetree overlay.
