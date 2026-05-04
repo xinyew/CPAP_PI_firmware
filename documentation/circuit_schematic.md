@@ -13,6 +13,7 @@ graph TD
     MAX["MAX30101 (Pulse Oximeter)"]
     SHT["SHT40 (Temp & Humidity)"]
     ESS["ESS102 (Force Sensor)"]
+    OPAMP["Dual Op-Amp (Signal Conditioning & VREF)"]
 
     %% Define logical sub-groups
     subgraph I2C_Bus ["I2C Bus Architecture"]
@@ -23,6 +24,7 @@ graph TD
 
     subgraph Analog_Input ["Differential Analog Input"]
         ESS
+        OPAMP
     end
 
     %% nRF to MUX connections
@@ -41,8 +43,11 @@ graph TD
     MAX -- "P1.13 (INT, Active Low)" --> NRF
 
     %% Analog Sensor Pins
-    ESS -- "P0.03 (AIN1, Positive Signal)" --> NRF
-    ESS -- "P0.05 (AIN3, 0.3V Reference)" --> NRF
+    ESS -- "Raw Force Resistance/Voltage" --> OPAMP
+    OPAMP -- "Buffered Sensor Output" --> NRF_P03["P0.03 (AIN1, Positive Signal)"]
+    OPAMP -- "0.3V Buffered Reference" --> NRF_P05["P0.05 (AIN3, Negative Reference)"]
+    NRF_P03 --> NRF
+    NRF_P05 --> NRF
 ```
 
 ### Important Wiring Notes:
