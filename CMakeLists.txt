@@ -21,6 +21,7 @@ target_sources(app PRIVATE
     src/sensors/sht40/MR01Right_SHT40/src/SHT40.cpp
     src/sensors/ess102/ess102_reader.c
     src/comm/comm_manager.c
+    src/comm/ble_manager.c
 )
 
 target_compile_definitions(app PRIVATE ARDUINO=100)

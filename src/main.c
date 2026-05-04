@@ -1,11 +1,33 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/i2c.h>
+#include <dk_buttons_and_leds.h>
 
 #include "comm/comm_manager.h"
 #include "sensors/sensor_manager.h"
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_WRN);
+
+static void update_led_indication(comm_interface_type_t type)
+{
+    /* Assuming LED1, LED2, LED3 for R/B/G indication on DK */
+    dk_set_leds(0); // Turn off all
+    switch (type) {
+        case COMM_IF_SERIAL: dk_set_led(DK_LED1, 1); break;
+        case COMM_IF_BLE:    dk_set_led(DK_LED2, 1); break;
+        default: break;
+    }
+}
+
+static void button_handler(uint32_t button_state, uint32_t has_changed)
+{
+    if (has_changed & button_state & DK_BTN1_MSK) {
+        comm_interface_type_t current = comm_manager_get_interface();
+        comm_interface_type_t next = (current + 1) % COMM_IF_COUNT;
+        comm_manager_set_interface(next);
+        update_led_indication(next);
+    }
+}
 
 static void scan_i2c(void)
 {
@@ -47,6 +69,17 @@ int main(void)
     int ret;
 
     LOG_INF("Starting CPAP Pressure Injury Sensing Application (Phase 1)");
+
+    /* Initialize Buttons and LEDs */
+    ret = dk_buttons_init(button_handler);
+    if (ret) {
+        LOG_ERR("Failed to initialize buttons (err %d)", ret);
+    }
+    ret = dk_leds_init();
+    if (ret) {
+        LOG_ERR("Failed to initialize LEDs (err %d)", ret);
+    }
+    update_led_indication(COMM_IF_SERIAL);
 
     /* Initialize Communication Interfaces */
     ret = comm_manager_init();
