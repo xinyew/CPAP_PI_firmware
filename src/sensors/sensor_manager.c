@@ -8,6 +8,12 @@
 
 LOG_MODULE_REGISTER(sensor_manager, LOG_LEVEL_INF);
 
+#include <stdio.h>
+#include <string.h>
+#include "comm/comm_manager.h"
+
+system_sensor_data_t current_sensor_data = {0};
+
 static sensor_interface_t *sensors[] = {
     &max30101_sensor,
     &sht40_sensor,
@@ -47,4 +53,19 @@ void sensor_manager_poll(void)
             }
         }
     }
+}
+
+void sensor_manager_report(void)
+{
+    char buf[128];
+    // Compact JSON format for 60Hz web app streaming
+    snprintf(buf, sizeof(buf), "{\"r\":%u,\"i\":%u,\"g\":%u,\"f\":%d,\"t\":%.1f,\"h\":%.1f}\r\n",
+             current_sensor_data.ppg_red,
+             current_sensor_data.ppg_ir,
+             current_sensor_data.ppg_green,
+             (int)current_sensor_data.force_mv,
+             (double)current_sensor_data.temp_c,
+             (double)current_sensor_data.humidity_rh);
+             
+    comm_manager_broadcast(buf, strlen(buf));
 }

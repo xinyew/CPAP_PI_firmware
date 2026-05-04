@@ -29,12 +29,11 @@ static int sht40_init(void)
 
 static int sht40_read(void)
 {
-    char buf[128];
     float temp, hum;
 
     if (sht40.measure(temp, hum)) {
-        snprintf(buf, sizeof(buf), "SHT40: Temp %.2f C, Hum %.2f %%", (double)temp, (double)hum);
-        comm_manager_broadcast(buf, strlen(buf));
+        current_sensor_data.temp_c = temp;
+        current_sensor_data.humidity_rh = hum;
         return 0;
     } else {
         LOG_ERR("Failed to measure SHT40");

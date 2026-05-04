@@ -51,7 +51,6 @@ static int ess102_init(void)
 
 static int ess102_read(void)
 {
-    char buf[128];
     int err;
     int32_t val_mv;
 
@@ -61,25 +60,23 @@ static int ess102_read(void)
         return err;
     }
 
-    // The raw sample is in sample_buffer[0]. It can be negative because of differential!
+    // The raw sample is in sample_buffer[0]
     val_mv = sample_buffer[0];
 
-    // Convert raw ADC value to millivolts using the reference configuration.
-    // For ADC_GAIN_1_4 and ADC_REF_INTERNAL (0.6V), max diff range is +/- 2.4V
+    current_sensor_data.force_raw = sample_buffer[0];
+
+    // Convert to millivolts
     err = adc_raw_to_millivolts_dt(&adc_channel, &val_mv);
     
-    // If adc_raw_to_millivolts_dt returns non-zero, it couldn't convert it, but usually it works.
-
-    snprintf(buf, sizeof(buf), "ESS102 (Force): Raw %d, Voltage %d mV", sample_buffer[0], (int)val_mv);
-    comm_manager_broadcast(buf, strlen(buf));
+    current_sensor_data.force_mv = val_mv;
 
     return 0;
 }
 
 static uint32_t ess102_get_interval(void)
 {
-    // Poll the ADC every 100ms (10Hz)
-    return 100;
+    // Poll the ADC exactly at 60Hz (16ms)
+    return 16;
 }
 
 sensor_interface_t ess102_sensor = {

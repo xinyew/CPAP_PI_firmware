@@ -7,6 +7,18 @@
 extern "C" {
 #endif
 
+typedef struct {
+    uint32_t ppg_red;
+    uint32_t ppg_ir;
+    uint32_t ppg_green;
+    int32_t  force_raw;
+    int32_t  force_mv;
+    float    temp_c;
+    float    humidity_rh;
+} system_sensor_data_t;
+
+extern system_sensor_data_t current_sensor_data;
+
 /**
  * @brief Generic interface for sensors.
  */
@@ -20,6 +32,7 @@ typedef struct {
 
 int sensor_manager_init(void);
 void sensor_manager_poll(void);
+void sensor_manager_report(void);
 
 #ifdef __cplusplus
 }

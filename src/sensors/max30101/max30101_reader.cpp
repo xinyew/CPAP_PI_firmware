@@ -42,20 +42,14 @@ static int max30101_init(void)
 
 static int max30101_read(void)
 {
-    char buf[128];
-
-    // Read the sensor
-    // In polling mode, check() reads any new samples and dumps them into the FIFO struct.
+    // The MAX30101 has an internal FIFO that buffers readings.
     particleSensor.check();
 
     // While there are new samples available in the library's buffer
     while (particleSensor.available()) {
-        uint32_t red = particleSensor.getFIFORed();
-        uint32_t ir = particleSensor.getFIFOIR();
-        uint32_t green = particleSensor.getFIFOGreen();
-
-        snprintf(buf, sizeof(buf), "MAX30101 (EmotiBit): Red %u, IR %u, Green %u", red, ir, green);
-        comm_manager_broadcast(buf, strlen(buf));
+        current_sensor_data.ppg_red = particleSensor.getFIFORed();
+        current_sensor_data.ppg_ir = particleSensor.getFIFOIR();
+        current_sensor_data.ppg_green = particleSensor.getFIFOGreen();
 
         // Advance the read pointer to the next sample
         particleSensor.nextSample();
@@ -66,9 +60,9 @@ static int max30101_read(void)
 
 static uint32_t max30101_get_interval(void)
 {
-    // Poll every 1 second (1000ms). Since we use particleSensor.check() and a while loop, 
-    // it will gracefully pull ALL 50 samples out of the backlog in one go!
-    return 1000;
+    // Poll the sensor 100 times per second (10ms). 
+    // This rapidly drains the FIFO into the current_sensor_data struct.
+    return 10;
 }
 
 sensor_interface_t max30101_sensor = {
