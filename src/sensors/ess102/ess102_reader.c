@@ -13,7 +13,7 @@ LOG_MODULE_REGISTER(ess102_reader, LOG_LEVEL_WRN);
  * Feedback Resistor (Rfb) in Ohms. 
  * Update this value to match your physical circuit.
  */
-#define RFB_OHM 10000.0f
+#define RFB_OHM 47000.0f
 
 /* 
  * We fetch the ADC specifications from the Devicetree overlay.
@@ -80,10 +80,10 @@ static int ess102_read(void)
     current_sensor_data.force_raw = vout_buffer[0];
 
     // 4. Calculate Resistance (Rfsr)
-    // Circuit: Inverting TIA with +input at Vref (Baseline), FSR between -input and GND.
-    // Formula: Vout = Vref - (Vref/Rfsr) * Rfb  => Rfsr = (Vref * Rfb) / (Vref - Vout)
+    // Circuit: Non-Inverting TIA or Divider where Vout RISES from Vref as force increases.
+    // Formula: Vout = Vref + (Vref/Rfsr) * Rfb  => Rfsr = (Vref * Rfb) / (Vout - Vref)
     
-    int32_t diff = vref_mv - vout_mv; // Current is proportional to how much Vout drops below Vref
+    int32_t diff = vout_mv - vref_mv; // Current is proportional to how much Vout RISES above Vref
     if (diff > 5) { // Threshold for minimum current flow
         current_sensor_data.force_res_ohm = RFB_OHM * ((float)vref_mv / (float)diff);
     } else {

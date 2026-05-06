@@ -77,7 +77,7 @@
 
 	channel@0 {
 		reg = <0>;
-		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,gain = "ADC_GAIN_1_6";
 		zephyr,reference = "ADC_REF_INTERNAL";
 		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
 		zephyr,input-positive = <NRF_SAADC_AIN1>; /* P0.03 - Buffered Vref */
@@ -86,7 +86,7 @@
 
 	channel@1 {
 		reg = <1>;
-		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,gain = "ADC_GAIN_1_6";
 		zephyr,reference = "ADC_REF_INTERNAL";
 		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
 		zephyr,input-positive = <NRF_SAADC_AIN3>; /* P0.05 - TIA Output (Vout) */
