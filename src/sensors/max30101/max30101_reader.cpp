@@ -28,9 +28,9 @@ static int max30101_init(void)
     // Setup to use EmotiBit default settings (or customize)
     // setup(powerLevel, sampleAverage, ledMode, sampleRate, pulseWidth, adcRange)
     byte powerLevel = 0x1F; // ~6.4mA
-    byte sampleAverage = 4; // Average 4 samples
+    byte sampleAverage = 1; // No averaging (maximum frequency)
     byte ledMode = 3;       // Red + IR + Green (Multi-LED)
-    int sampleRate = 50;    // 50 Hz
+    int sampleRate = 100;    // 100 Hz
     int pulseWidth = 411;   // 18-bit resolution
     int adcRange = 4096;    // 15.63 pA/LSB
 

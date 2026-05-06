@@ -105,11 +105,10 @@ int main(void)
         // Poll sensors as fast as possible to fill the cache
         sensor_manager_poll();
         
-        // Report unified JSON at exactly 60Hz (driven by k_msleep for now, but tighter)
+        // Report unified JSON at exactly 50Hz for BLE stability
         sensor_manager_report();
         
-        // 1000ms / 60 = 16.66ms. k_msleep(16) is the closest.
-        k_msleep(16);
+        k_msleep(20);
     }
 
     return 0;
