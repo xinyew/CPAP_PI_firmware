@@ -57,13 +57,15 @@ void sensor_manager_poll(void)
 
 void sensor_manager_report(void)
 {
-    char buf[128];
+    char buf[192];
     // Compact JSON format for 60Hz web app streaming
-    snprintf(buf, sizeof(buf), "{\"r\":%u,\"i\":%u,\"g\":%u,\"f\":%d,\"t\":%.1f,\"h\":%.1f}\r\n",
+    snprintf(buf, sizeof(buf), "{\"r\":%u,\"i\":%u,\"g\":%u,\"f\":%d,\"v\":%d,\"res\":%.1f,\"t\":%.1f,\"h\":%.1f}\r\n",
              current_sensor_data.ppg_red,
              current_sensor_data.ppg_ir,
              current_sensor_data.ppg_green,
              (int)current_sensor_data.force_mv,
+             (int)current_sensor_data.force_vref_mv,
+             (double)current_sensor_data.force_res_ohm,
              (double)current_sensor_data.temp_c,
              (double)current_sensor_data.humidity_rh);
              

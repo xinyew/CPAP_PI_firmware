@@ -22,9 +22,10 @@ The system monitors three primary physiological and environmental parameters at 
 - **I2C SDA/SCL**: P0.27 / P0.26
 - **MUX Reset**: P0.02
 - **MAX30101 IRQ**: P1.13
-- **ESS102 Differential ADC**:
-    - Positive (Input): **AIN1 (P0.03)**
-    - Negative (Ref 0.3V): **AIN3 (P0.05)**
+- **ESS102 Force Sensor (TIA Architecture)**:
+    - **P0.03 (AIN1)**: Measured Buffered Vref (used for exact resistance calculation).
+    - **P0.05 (AIN3)**: TIA Output Voltage ($V_{out}$).
+    - **Calculation**: $R_{fsr} = R_{fb} \cdot (V_{ref} / V_{out})$.
 - **User Interface**:
     - **Button 1**: Cycle Communication Mode (Serial -> BLE).
     - **LED 1**: Serial Mode Indicator.
@@ -51,8 +52,10 @@ The system monitors three primary physiological and environmental parameters at 
 ## Serial Protocol
 The board emits a compact JSON object at 60Hz:
 ```json
-{"r": 1234, "i": 5678, "g": 9012, "f": 450, "t": 24.5, "h": 45.2}
+{"r":123,"i":456,"g":789,"f":450,"v":3300,"res":12000.5,"t":24.5,"h":45.2}
 ```
 - `r/i/g`: Red, IR, and Green PPG values.
-- `f`: Force sensor value in mV.
+- `f`: TIA Output Voltage (mV).
+- `v`: Measured Vref (mV).
+- `res`: Calculated FSR Resistance ($\Omega$).
 - `t/h`: Temperature (°C) and Humidity (%).

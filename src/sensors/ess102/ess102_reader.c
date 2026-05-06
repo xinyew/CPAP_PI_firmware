@@ -10,73 +10,90 @@
 LOG_MODULE_REGISTER(ess102_reader, LOG_LEVEL_WRN);
 
 /* 
- * We fetch the ADC specification from the Devicetree overlay.
- * io-channels = <&adc 0>; maps to zephyr,user node
+ * Feedback Resistor (Rfb) in Ohms. 
+ * Update this value to match your physical circuit.
  */
-static const struct adc_dt_spec adc_channel = ADC_DT_SPEC_GET(DT_PATH(zephyr_user));
+#define RFB_OHM 10000.0f
 
-static int16_t sample_buffer[1];
+/* 
+ * We fetch the ADC specifications from the Devicetree overlay.
+ * io-channels = <&adc 0>, <&adc 1>; maps to zephyr,user node
+ */
+static const struct adc_dt_spec adc_vref = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0);
+static const struct adc_dt_spec adc_vout = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 1);
 
-static struct adc_sequence sequence = {
-    .buffer = sample_buffer,
-    .buffer_size = sizeof(sample_buffer),
-    // Optional: .calibrate = true if needed on first run
+static int16_t vref_buffer[1];
+static int16_t vout_buffer[1];
+
+static struct adc_sequence vref_seq = {
+    .buffer = vref_buffer,
+    .buffer_size = sizeof(vref_buffer),
+};
+
+static struct adc_sequence vout_seq = {
+    .buffer = vout_buffer,
+    .buffer_size = sizeof(vout_buffer),
 };
 
 static int ess102_init(void)
 {
-    LOG_INF("Initializing ESS102 Force Sensor (Differential ADC)...");
+    LOG_INF("Initializing ESS102 Force Sensor (TIA + Measured Vref)...");
 
-    if (!adc_is_ready_dt(&adc_channel)) {
-        LOG_ERR("ADC controller device %s not ready", adc_channel.dev->name);
+    if (!adc_is_ready_dt(&adc_vref) || !adc_is_ready_dt(&adc_vout)) {
+        LOG_ERR("ADC controller not ready");
         return -ENODEV;
     }
 
-    int err = adc_channel_setup_dt(&adc_channel);
-    if (err < 0) {
-        LOG_ERR("Could not setup ADC channel (%d)", err);
-        return err;
-    }
+    int err = adc_channel_setup_dt(&adc_vref);
+    if (err < 0) return err;
 
-    // Read the channel info to populate sequence
-    err = adc_sequence_init_dt(&adc_channel, &sequence);
-    if (err < 0) {
-        LOG_ERR("Could not init ADC sequence (%d)", err);
-        return err;
-    }
+    err = adc_channel_setup_dt(&adc_vout);
+    if (err < 0) return err;
 
-    LOG_INF("ESS102 ADC channel perfectly setup! Resolution: %d", sequence.resolution);
+    adc_sequence_init_dt(&adc_vref, &vref_seq);
+    adc_sequence_init_dt(&adc_vout, &vout_seq);
+
+    LOG_INF("ESS102 Dual-Channel ADC setup complete.");
     return 0;
 }
 
 static int ess102_read(void)
 {
     int err;
-    int32_t val_mv;
+    int32_t vref_mv, vout_mv;
 
-    err = adc_read_dt(&adc_channel, &sequence);
-    if (err < 0) {
-        LOG_ERR("Could not read ADC (%d)", err);
-        return err;
+    // 1. Read Vref (P0.03)
+    err = adc_read_dt(&adc_vref, &vref_seq);
+    if (err < 0) return err;
+    vref_mv = vref_buffer[0];
+    adc_raw_to_millivolts_dt(&adc_vref, &vref_mv);
+
+    // 2. Read Vout (P0.05)
+    err = adc_read_dt(&adc_vout, &vout_seq);
+    if (err < 0) return err;
+    vout_mv = vout_buffer[0];
+    adc_raw_to_millivolts_dt(&adc_vout, &vout_mv);
+
+    // 3. Store raw/mv data
+    current_sensor_data.force_vref_mv = vref_mv;
+    current_sensor_data.force_mv = vout_mv;
+    current_sensor_data.force_raw = vout_buffer[0];
+
+    // 4. Calculate Resistance (Rfsr)
+    // Formula: Rfsr = Rfb * (Vref / Vout)
+    // Avoid division by zero
+    if (vout_mv > 5) { // Threshold to ignore noise
+        current_sensor_data.force_res_ohm = RFB_OHM * ((float)vref_mv / (float)vout_mv);
+    } else {
+        current_sensor_data.force_res_ohm = 1000000.0f; // High value for open circuit
     }
-
-    // The raw sample is in sample_buffer[0]
-    val_mv = sample_buffer[0];
-
-    current_sensor_data.force_raw = sample_buffer[0];
-
-    // Convert to millivolts
-    err = adc_raw_to_millivolts_dt(&adc_channel, &val_mv);
-    
-    current_sensor_data.force_mv = val_mv;
 
     return 0;
 }
 
 static uint32_t ess102_get_interval(void)
 {
-    // Poll the ADC exactly at 60Hz (16ms)
-    return 16;
+    return 16; // 60Hz
 }
 
 sensor_interface_t ess102_sensor = {

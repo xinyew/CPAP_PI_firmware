@@ -12,7 +12,9 @@ typedef struct {
     uint32_t ppg_ir;
     uint32_t ppg_green;
     int32_t  force_raw;
-    int32_t  force_mv;
+    int32_t  force_mv;      /* TIA Output Voltage */
+    int32_t  force_vref_mv; /* Measured Vref */
+    float    force_res_ohm; /* Calculated FSR Resistance */
     float    temp_c;
     float    humidity_rh;
 } system_sensor_data_t;
