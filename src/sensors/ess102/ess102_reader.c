@@ -80,12 +80,14 @@ static int ess102_read(void)
     current_sensor_data.force_raw = vout_buffer[0];
 
     // 4. Calculate Resistance (Rfsr)
-    // Formula: Rfsr = Rfb * (Vref / Vout)
-    // Avoid division by zero
-    if (vout_mv > 5) { // Threshold to ignore noise
-        current_sensor_data.force_res_ohm = RFB_OHM * ((float)vref_mv / (float)vout_mv);
+    // Circuit: Inverting TIA with +input at Vref (Baseline), FSR between -input and GND.
+    // Formula: Vout = Vref - (Vref/Rfsr) * Rfb  => Rfsr = (Vref * Rfb) / (Vref - Vout)
+    
+    int32_t diff = vref_mv - vout_mv; // Current is proportional to how much Vout drops below Vref
+    if (diff > 5) { // Threshold for minimum current flow
+        current_sensor_data.force_res_ohm = RFB_OHM * ((float)vref_mv / (float)diff);
     } else {
-        current_sensor_data.force_res_ohm = 1000000.0f; // High value for open circuit
+        current_sensor_data.force_res_ohm = 1000000.0f; // High value for open circuit/no force
     }
 
     return 0;
