@@ -7,7 +7,8 @@
 - **SDK**: nRF Connect SDK v3.3.0 / Zephyr v4.3.99
 - **Module**: Raytac MDBT50Q-P1MV2 (nRF52840)
 - **Board**: `cpap_pi_control/nrf52840` (custom, in `Boards/kamoamoa/cpap_pi_control/`)
-- **Build**: `cd build && ninja` (app image in `build/Moamoa_CPAP_PI_firmware/`)
+- **Build**: `cd build && ninja` (app image in `build/CPAP_PI_firmware/`)
+- **Working dir**: `c:\Users\xwang3239\Downloads\CPAP_PI_firmware` (the old `Moamoa_CPAP_PI_firmware` checkout is retired)
 - **Ninja**: `C:\Users\xwang3239\ncs\toolchains\936afb6332\opt\bin\ninja.exe`
 - **Console**: RTT only (`printk()`), no UART. No `%f` — use fixed-point ints. Enable float-printing when necessary
 
