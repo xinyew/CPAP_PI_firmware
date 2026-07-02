@@ -59,6 +59,39 @@ Please refer to ./Boards/kamoamoa/cpap_pi_control/* for available pins, peripher
 - 12-bit, gain 1/6, internal 0.6 V reference → 3.6 V full scale
 - AIN0–AIN2 = ESS102 force channels FF1–FF3 (TIA outputs), AIN3 = VREF
 
+## Sampling-Rate Budget (per-sensor analysis)
+
+Target profile for the live web-portal plots, derived from signal physics and
+the measured bus topology (3× MAX30101 behind one 400 kHz I2C mux, 6× MS5611
+sharing one SPI bus, FSRs on the SAADC):
+
+| Sensor | Meaningful rate | Achievable ceiling | Reason for the ceiling |
+|---|---|---|---|
+| PPG (MAX30101 ×3) | **100 Hz** each | ~200 Hz each | Sensor-side: 3-LED mode needs the 411 µs pulse width for SNR; I2C load at 100 Hz is only ~2.7 kB/s (<10% of the 400 kHz bus incl. mux switches) |
+| FSR (ESS102 ×3 + VREF) | **100 Hz** (match PPG) | ~1 kHz+ | SAADC is 200 kSPS; signal content (respiration, mask shifts) is only a few Hz — faster sampling just plots noise |
+| Baro (MS5611 ×6) | **25–50 Hz** all six | ~100 Hz all six (P-only, T at 1 Hz); ~200 Hz at OSR 1024 | Conversion time (9.04 ms at OSR 4096), NOT SPI — all six chips convert simultaneously. Prefer high OSR (0.012 mbar RMS) over speed for contact pressure |
+| SHT40 | **1 Hz** high-precision | — | Micro-climate drifts over seconds; hard polling self-heats the sensor |
+
+Notes:
+- Drain PPG FIFOs in bursts every 20–40 ms; mux channel switch ≈ 50 µs amortizes to nothing.
+- MS5611: command all six, wait one conversion, read all six. Run temperature conversions at 1 Hz interleaved with pressure.
+- CPU (64 MHz M4F) and RAM are not limiting; all buses run on EasyDMA.
+
+## BLE Throughput Budget
+
+- Recommended profile above, **binary-packed** (3 B per 18-bit PPG channel,
+  int16 mV force, int24 pressure) ≈ **5–6 kB/s (~48 kbps)**.
+- NUS link with MTU 247 + DLE at 1M PHY realistically moves 20–40 kB/s
+  (more on 2M PHY) → 3–6× headroom, **sensor rates need not drop for BLE**,
+  provided samples are batched ~25–50 ms per notification to fill 244-byte
+  payloads.
+- **JSON does not scale**: ~250–300 B/frame × 100 Hz ≈ 25–30 kB/s of ASCII —
+  over budget. Keep JSON only as a low-rate debug mode.
+- Web-Bluetooth caveat: browsers can't request short connection intervals;
+  OS stacks often settle at 15–30 ms → practical portal throughput is
+  commonly 10–20 kB/s. Binary framing stays inside even the pessimistic end.
+- Decimate the *plot* to ~30 fps regardless; log the full rate, draw less.
+
 ## Companion hardware
 
 - Control board schematic: `CPAP_PI_Sensor_Body.kicad_sch` (KiCad project name predates the _control rename)
