@@ -45,6 +45,14 @@
 	};
 };
 
+/* High-voltage mode: VDDH = DVDD = 3.3 V, REG0 supplies VDD/GPIO.
+ * L4 (REG0 DCDC inductor) is unpopulated — REG0 stays in LDO mode.
+ * board.c programs UICR REGOUT0 = 3V3 on first boot after an erase.
+ */
+&reg0 {
+	status = "okay";
+};
+
 &adc {
 	status = "okay";
 };
