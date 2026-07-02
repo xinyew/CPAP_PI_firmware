@@ -1,0 +1,12 @@
+# Project-local binding for the TE MS5611-01BA03 pressure sensor (SPI mode).
+# Protocol-compatible with the in-tree meas,ms5607; the compensation math
+# differs (handled by the project driver).
+#
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+    TE Connectivity MS5611 digital pressure and temperature sensor (SPI).
+
+compatible: "meas,ms5611"
+
+include: [sensor-device.yaml, spi-device.yaml]

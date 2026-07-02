@@ -1,5 +1,5 @@
 /*
- * CPAP PI Sensor Control — PPG + FSR Sensing Firmware
+ * CPAP PI Sensor Control — PPG + FSR + Pressure Sensing Firmware
  * Custom nRF52840 board (cpap_pi_control/nrf52840, Raytac MDBT50Q-P1M)
  */
 
@@ -7,7 +7,7 @@
 #include <zephyr/sys/printk.h>
 #include <zephyr/logging/log.h>
 
-#include "drivers/driver_tca9548a.h"
+#include "drivers/bus_diag.h"
 #include "drivers/driver_fsr.h"
 #include "drivers/driver_led.h"
 #include "interface/ble_interface.h"
@@ -23,12 +23,14 @@ int main(void)
         LOG_ERR("Failed to init LEDs");
     }
 
-    /* TCA9548A I2C mux — release reset, probe @0x70 */
-    if (drv_tca9548a_init() < 0) {
-        LOG_ERR("Failed to init TCA9548A");
-    }
+    /* Bring-up diagnostics: TCA9548A channels (DT mux driver) and the
+     * six MS5611 barometers on the mask flex.
+     */
+    int i2c_ok = bus_diag_scan_mux();
+    int baro_ok = bus_diag_ms5611_check();
+    printk("Bus diag: %d/4 I2C sensors, %d/6 baros OK\n", i2c_ok, baro_ok);
 
-    /* SAADC — FSR channels FF1-FF3 + VREF */
+    /* SAADC — FSR channels FF1-FF3 + VREF (from devicetree) */
     if (drv_fsr_init() < 0) {
         LOG_ERR("Failed to init FSR ADC");
     }

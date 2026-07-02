@@ -7,7 +7,7 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(cpap_pi_control)
 target_sources(app PRIVATE
     src/main.c
-    src/drivers/driver_tca9548a.c
+    src/drivers/bus_diag.c
     src/drivers/driver_fsr.c
     src/drivers/driver_led.c
     src/interface/ble_interface.c

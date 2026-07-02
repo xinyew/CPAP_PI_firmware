@@ -7,6 +7,8 @@
 /dts-v1/;
 #include <nordic/nrf52840_qiaa.dtsi>
 #include <nordic/nrf52840_partition.dtsi>
+#include <zephyr/dt-bindings/adc/adc.h>
+#include <zephyr/dt-bindings/adc/nrf-saadc.h>
 #include "cpap_pi_control_nrf52840-pinctrl.dtsi"
 
 / {
@@ -32,10 +34,12 @@
 	};
 
 	zephyr,user {
-		/* TCA9548A I2C mux reset — active low */
-		tca-reset-gpios = <&gpio1 0 GPIO_ACTIVE_LOW>;
-		/* PPG sensor interrupt (shared, via 30-pin FPC) */
+		/* PPG sensor interrupt (shared by all 3 MAX30101, external
+		 * 10k pull-up to DVDD, via 30-pin FPC)
+		 */
 		ppg-int-gpios = <&gpio0 11 GPIO_ACTIVE_LOW>;
+		/* FSR analog front-end: FF1-FF3 TIA outputs + buffered VREF */
+		io-channels = <&adc 0>, <&adc 1>, <&adc 2>, <&adc 3>;
 	};
 
 	aliases {
@@ -55,6 +59,45 @@
 
 &adc {
 	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	/* 12-bit, gain 1/6, 0.6 V internal ref -> 3.6 V full scale */
+	channel@0 {
+		reg = <0>;
+		zephyr,gain = "ADC_GAIN_1_6";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,input-positive = <NRF_SAADC_AIN0>; /* P0.02 - FF1 */
+		zephyr,resolution = <12>;
+	};
+
+	channel@1 {
+		reg = <1>;
+		zephyr,gain = "ADC_GAIN_1_6";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,input-positive = <NRF_SAADC_AIN1>; /* P0.03 - FF2 */
+		zephyr,resolution = <12>;
+	};
+
+	channel@2 {
+		reg = <2>;
+		zephyr,gain = "ADC_GAIN_1_6";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,input-positive = <NRF_SAADC_AIN2>; /* P0.04 - FF3 */
+		zephyr,resolution = <12>;
+	};
+
+	channel@3 {
+		reg = <3>;
+		zephyr,gain = "ADC_GAIN_1_6";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,input-positive = <NRF_SAADC_AIN3>; /* P0.05 - VREF */
+		zephyr,resolution = <12>;
+	};
 };
 
 &uicr {
@@ -80,15 +123,96 @@
 			  "LED1", "LED2", "", "", "", "", "", "";
 };
 
-/* TCA9548A I2C mux @0x70 (A0=A1=A2=GND) — PPG1-3 on ch0-2, T/H on ch3 */
+/* TCA9548A I2C mux @0x70 (A0=A1=A2=GND) — PPG1-3 on ch0-2, T/H on ch3.
+ * Sensors live on the mask flex PCB, reached via the 30-pin FPC.
+ * Bus pull-ups (4.7k to DVDD) are on the control board, up- and downstream.
+ */
 &i2c0 {
 	status = "okay";
 	pinctrl-0 = <&i2c0_default>;
 	pinctrl-1 = <&i2c0_sleep>;
 	pinctrl-names = "default", "sleep";
+
+	tca9548a: tca9548a@70 {
+		compatible = "ti,tca9548a";
+		reg = <0x70>;
+		status = "okay";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reset-gpios = <&gpio1 0 GPIO_ACTIVE_LOW>;
+
+		mux_i2c0: mux_i2c@0 {
+			compatible = "ti,tca9548a-channel";
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			ppg1: max30101@57 {
+				compatible = "maxim,max30101";
+				reg = <0x57>;
+				/* Rate budget: 3 LEDs, 100 Hz, 18-bit (411 us) */
+				acq-mode = "multi-led";
+				led-slot = <1 2 3 0>; /* R, IR, G */
+				smp-sr = <100>;
+				led-pw = <411>;
+				fifo-rollover-en;
+			};
+		};
+
+		mux_i2c1: mux_i2c@1 {
+			compatible = "ti,tca9548a-channel";
+			reg = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			ppg2: max30101@57 {
+				compatible = "maxim,max30101";
+				reg = <0x57>;
+				/* Rate budget: 3 LEDs, 100 Hz, 18-bit (411 us) */
+				acq-mode = "multi-led";
+				led-slot = <1 2 3 0>; /* R, IR, G */
+				smp-sr = <100>;
+				led-pw = <411>;
+				fifo-rollover-en;
+			};
+		};
+
+		mux_i2c2: mux_i2c@2 {
+			compatible = "ti,tca9548a-channel";
+			reg = <2>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			ppg3: max30101@57 {
+				compatible = "maxim,max30101";
+				reg = <0x57>;
+				/* Rate budget: 3 LEDs, 100 Hz, 18-bit (411 us) */
+				acq-mode = "multi-led";
+				led-slot = <1 2 3 0>; /* R, IR, G */
+				smp-sr = <100>;
+				led-pw = <411>;
+				fifo-rollover-en;
+			};
+		};
+
+		mux_i2c3: mux_i2c@3 {
+			compatible = "ti,tca9548a-channel";
+			reg = <3>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			sht40: sht4x@44 {
+				compatible = "sensirion,sht4x";
+				reg = <0x44>;
+				repeatability = <2>;
+			};
+		};
+	};
 };
 
-/* Off-board SPI devices via 30-pin FPC, six chip-selects */
+/* Six MS5611 barometers on the mask flex PCB (PS = GND -> SPI mode),
+ * one per chip-select, all sharing SCLK/SDI/SDO via the 30-pin FPC.
+ */
 &spi1 {
 	status = "okay";
 	pinctrl-0 = <&spi1_default>;
@@ -100,6 +224,42 @@
 		   <&gpio0 20 GPIO_ACTIVE_LOW>,  /* CS4 */
 		   <&gpio0 22 GPIO_ACTIVE_LOW>,  /* CS5 */
 		   <&gpio0 24 GPIO_ACTIVE_LOW>;  /* CS6 */
+
+	baro1: ms5611@0 {
+		compatible = "meas,ms5611";
+		reg = <0>;
+		spi-max-frequency = <8000000>;
+	};
+
+	baro2: ms5611@1 {
+		compatible = "meas,ms5611";
+		reg = <1>;
+		spi-max-frequency = <8000000>;
+	};
+
+	baro3: ms5611@2 {
+		compatible = "meas,ms5611";
+		reg = <2>;
+		spi-max-frequency = <8000000>;
+	};
+
+	baro4: ms5611@3 {
+		compatible = "meas,ms5611";
+		reg = <3>;
+		spi-max-frequency = <8000000>;
+	};
+
+	baro5: ms5611@4 {
+		compatible = "meas,ms5611";
+		reg = <4>;
+		spi-max-frequency = <8000000>;
+	};
+
+	baro6: ms5611@5 {
+		compatible = "meas,ms5611";
+		reg = <5>;
+		spi-max-frequency = <8000000>;
+	};
 };
 
 &gpregret1 {
