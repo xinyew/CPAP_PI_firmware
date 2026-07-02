@@ -1,0 +1,15 @@
+identifier: cpap_pi_body/nrf52840
+name: CPAP-PI-Sensor-Body
+type: mcu
+arch: arm
+toolchain:
+  - gnuarmemb
+  - zephyr
+sysbuild: true
+ram: 256
+flash: 1024
+supported:
+  - gpio
+  - i2c
+  - spi
+  - adc

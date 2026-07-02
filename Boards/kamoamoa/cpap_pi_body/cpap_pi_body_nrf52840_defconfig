@@ -1,0 +1,17 @@
+# Enable GPIO and MPU
+CONFIG_GPIO=y
+CONFIG_ARM_MPU=y
+
+# Subsystem defaults for CPAP PI Sensor Body hardware
+CONFIG_I2C=y
+CONFIG_SPI=y
+CONFIG_ADC=y
+
+# Disable UART, Enable Segger RTT for Debug
+CONFIG_SERIAL=n
+CONFIG_USE_SEGGER_RTT=y
+CONFIG_RTT_CONSOLE=y
+CONFIG_CONSOLE=y
+
+# 32.768 kHz crystal (X2) present on this board
+CONFIG_CLOCK_CONTROL_NRF_K32SRC_XTAL=y
