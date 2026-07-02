@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-CPAP PI Sensor Body BLE control — sensor sampling-interval setter.
+CPAP PI Sensor Control BLE control — sensor sampling-interval setter.
 
-Connects to a "CPAP_PI_Body" device and writes a 16-bit interval value
+Connects to a "CPAP_PI_Control" device and writes a 16-bit interval value
 (ms, little-endian) via Write Without Response to a custom GATT
 characteristic (UUID 0xFFE1).
 
@@ -24,7 +24,7 @@ from bleak import BleakClient, BleakScanner
 # Must match firmware — see ble_interface.c
 SERVICE_UUID = "0000ffe0-0000-1000-8000-00805f9b34fb"
 CHAR_UUID    = "0000ffe1-0000-1000-8000-00805f9b34fb"
-DEVICE_NAME  = "CPAP_PI_Body"
+DEVICE_NAME  = "CPAP_PI_Control"
 
 
 def pack_interval(ms: int) -> bytes:
@@ -95,7 +95,7 @@ async def interactive(address: str):
 
 
 async def main():
-    parser = argparse.ArgumentParser(description="CPAP PI Sensor Body BLE interval control")
+    parser = argparse.ArgumentParser(description="CPAP PI Sensor Control BLE interval control")
     parser.add_argument("-i", "--interval", type=int, default=None,
                         help="Sampling interval in ms (one-shot mode)")
     args = parser.parse_args()

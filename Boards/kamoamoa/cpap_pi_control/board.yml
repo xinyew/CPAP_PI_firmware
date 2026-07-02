@@ -1,6 +1,6 @@
 board:
-  name: cpap_pi_body
-  full_name: CPAP PI Sensor Body Board
+  name: cpap_pi_control
+  full_name: CPAP PI Sensor Control Board
   vendor: kamoamoa
   socs:
     - name: nrf52840
@@ -13,7 +13,7 @@ runners:
         run: first
         groups:
           - boards:
-              - cpap_pi_body/nrf52840
+              - cpap_pi_control/nrf52840
     '--erase':
       - runners:
           - jlink
@@ -21,7 +21,7 @@ runners:
         run: first
         groups:
           - boards:
-              - cpap_pi_body/nrf52840
+              - cpap_pi_control/nrf52840
     '--reset':
       - runners:
           - jlink
@@ -29,4 +29,4 @@ runners:
         run: last
         groups:
           - boards:
-              - cpap_pi_body/nrf52840
+              - cpap_pi_control/nrf52840

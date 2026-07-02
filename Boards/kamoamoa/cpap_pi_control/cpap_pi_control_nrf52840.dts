@@ -1,5 +1,5 @@
 /*
- * CPAP PI Sensor Body board — Raytac MDBT50Q-P1M module (nRF52840)
+ * CPAP PI Sensor Control board — Raytac MDBT50Q-P1M module (nRF52840)
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,11 +7,11 @@
 /dts-v1/;
 #include <nordic/nrf52840_qiaa.dtsi>
 #include <nordic/nrf52840_partition.dtsi>
-#include "cpap_pi_body_nrf52840-pinctrl.dtsi"
+#include "cpap_pi_control_nrf52840-pinctrl.dtsi"
 
 / {
-	model = "CPAP PI Sensor Body nRF52840";
-	compatible = "kamoamoa,cpap-pi-body-nrf52840";
+	model = "CPAP PI Sensor Control nRF52840";
+	compatible = "kamoamoa,cpap-pi-control-nrf52840";
 
 	chosen {
 		zephyr,boot-mode = &boot_mode0;

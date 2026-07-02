@@ -1,7 +1,7 @@
 /*
  * BLE interface — GATT server for sensor sampling control.
  *
- * Advertises as "CPAP_PI_Body", exposes one Write-Without-Response
+ * Advertises as "CPAP_PI_Control", exposes one Write-Without-Response
  * characteristic (16-bit sampling interval in ms, little-endian).
  * On write: validates range (10–10000 ms) and updates the interval
  * used by the main sampling loop.
@@ -35,7 +35,7 @@ LOG_MODULE_REGISTER(ble_if, LOG_LEVEL_INF);
 
 static const struct bt_data ad[] = {
     BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
-    BT_DATA(BT_DATA_NAME_COMPLETE, "CPAP_PI_Body", sizeof("CPAP_PI_Body") - 1),
+    BT_DATA(BT_DATA_NAME_COMPLETE, "CPAP_PI_Control", sizeof("CPAP_PI_Control") - 1),
 };
 
 /* -------------------------------------------------------------------------- */
@@ -174,6 +174,6 @@ int ble_interface_init(void)
         return ret;
     }
 
-    LOG_INF("BLE advertising as \"CPAP_PI_Body\"");
+    LOG_INF("BLE advertising as \"CPAP_PI_Control\"");
     return 0;
 }

@@ -6,7 +6,7 @@
 
 - **SDK**: nRF Connect SDK v3.3.0 / Zephyr v4.3.99
 - **Module**: Raytac MDBT50Q-P1MV2 (nRF52840)
-- **Board**: `cpap_pi_body/nrf52840` (custom, in `Boards/kamoamoa/cpap_pi_body/`)
+- **Board**: `cpap_pi_control/nrf52840` (custom, in `Boards/kamoamoa/cpap_pi_control/`)
 - **Build**: `cd build && ninja` (app image in `build/Moamoa_CPAP_PI_firmware/`)
 - **Ninja**: `C:\Users\xwang3239\ncs\toolchains\936afb6332\opt\bin\ninja.exe`
 - **Console**: RTT only (`printk()`), no UART. No `%f` — use fixed-point ints. Enable float-printing when necessary
@@ -15,7 +15,7 @@
 Load nrf connect sdk terminal for env variables, etc, please do this before any command below other than the RTT reading:
 $ nrfutil sdk-manager toolchain launch --ncs-version v3.3.0 --terminal
 Build project (the `-- -DBOARD_ROOT=.` is required on the first/pristine configure so sysbuild finds the custom board):
-$ west build -b cpap_pi_body/nrf52840 -- -DBOARD_ROOT=.
+$ west build -b cpap_pi_control/nrf52840 -- -DBOARD_ROOT=.
 Flash firmware after a successful build:
 $ west flash --recover
 Load RTT console and connect to the board (makesure to set a timeout of 5 seconds, if there's nothing or returned meaning no output):
@@ -25,32 +25,39 @@ $ & "~\Downloads\SimplicityCommander-Windows\SimplicityCommander-Windows\Command
 
 | Pin   | Function          | Notes                              |
 |-------|-------------------|------------------------------------|
-| P0.02 | AIN0 (in)         | FF1 — FSR 1 via OPA2333            |
-| P0.03 | AIN1 (in)         | FF2 — FSR 2 via OPA2333            |
-| P0.04 | AIN2 (in)         | FF3 — FSR 3 via OPA2333            |
+| P0.02 | AIN0 (in)         | FF1 — ESS102 FSR 1 via OPA2333     |
+| P0.03 | AIN1 (in)         | FF2 — ESS102 FSR 2 via OPA2333     |
+| P0.04 | AIN2 (in)         | FF3 — ESS102 FSR 3 via OPA2333     |
 | P0.05 | AIN3 (in)         | VREF — op-amp reference rail       |
-| P0.07 | CS1 (out)         | SPI chip-select 1 (off-board)      |
+| P0.07 | CS1 (out)         | MS5611 baro 1 chip-select          |
 | P0.08 | I2C SDA           | To TCA9548A mux                    |
-| P0.11 | PPG_INT (in)      | PPG sensor interrupt               |
+| P0.11 | PPG_INT (in)      | MAX30101 interrupt (shared)        |
 | P0.12 | I2C SCL           | To TCA9548A mux                    |
-| P0.13 | SPI SCK (out)     | Off-board via 30-pin FPC           |
-| P0.14 | SPI MOSI (out)    | Off-board via 30-pin FPC           |
-| P0.17 | CS2 (out)         | SPI chip-select 2                  |
+| P0.13 | SPI SCK (out)     | To mask flex via 30-pin FPC        |
+| P0.14 | SPI MOSI (out)    | To mask flex via 30-pin FPC        |
+| P0.17 | CS2 (out)         | MS5611 baro 2 chip-select          |
 | P0.18 | nRESET            | gpio-as-nreset                     |
-| P0.19 | CS3 (out)         | SPI chip-select 3                  |
-| P0.20 | CS4 (out)         | SPI chip-select 4                  |
-| P0.21 | SPI MISO (in)     | Off-board via 30-pin FPC           |
-| P0.22 | CS5 (out)         | SPI chip-select 5                  |
-| P0.24 | CS6 (out)         | SPI chip-select 6                  |
+| P0.19 | CS3 (out)         | MS5611 baro 3 chip-select          |
+| P0.20 | CS4 (out)         | MS5611 baro 4 chip-select          |
+| P0.21 | SPI MISO (in)     | From mask flex via 30-pin FPC      |
+| P0.22 | CS5 (out)         | MS5611 baro 5 chip-select          |
+| P0.24 | CS6 (out)         | MS5611 baro 6 chip-select          |
 | P1.00 | TCA_RST (out)     | TCA9548A reset, active-low         |
 | P1.08 | LED1 (out)        | Active-low                         |
 | P1.09 | LED2 (out)        | Active-low                         |
 
+## Sensors on the mask flex PCB (via 30-pin FPC J1/J5)
+
+- 3× **MAX30101** PPG @ I2C `0x57`, one per mux channel ch0–ch2, shared PPG_INT
+- 1× **SHT40** temp/humidity @ I2C `0x44`, mux ch3
+- 6× **MS5611** barometric pressure, SPI mode, one per chip-select CS1–CS6
+- 3× **ESS102** force sensors (FSR tails FF1c–FF3c) → OPA2333 TIA on control board → AIN0–AIN2
+
 ## I2C Addresses (7-bit)
 
 - TCA9548A (mux): `0x70` (A0=A1=A2=GND)
-- PPG sensors ×3: behind mux ch0–ch2 (SDA/SCL_PPG1-3, off-board)
-- Temp/Humidity: behind mux ch3 (SDA/SCL_TH, off-board)
+- MAX30101 ×3: `0x57` (behind mux ch0–ch2)
+- SHT40: `0x44` (behind mux ch3)
 
 ## SOC components to use
 i2c0 (TWIM0, to mux), spi1 (SPIM1, 6 cs-gpios), adc (SAADC AIN0-3), bunch of gpios.

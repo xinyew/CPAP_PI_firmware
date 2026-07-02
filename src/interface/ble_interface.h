@@ -6,7 +6,7 @@
 /**
  * @brief Initialise Bluetooth — GATT server, advertising, sample-rate control.
  *
- * After this call the board advertises as "CPAP_PI_Body" and accepts
+ * After this call the board advertises as "CPAP_PI_Control" and accepts
  * Write-Without-Response to a custom characteristic that sets the sensor
  * sampling interval (uint16_t, little-endian, milliseconds).
  *

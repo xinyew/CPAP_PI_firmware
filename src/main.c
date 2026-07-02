@@ -1,6 +1,6 @@
 /*
- * CPAP PI Sensor Body — PPG + FSR Sensing Firmware
- * Custom nRF52840 board (cpap_pi_body/nrf52840, Raytac MDBT50Q-P1M)
+ * CPAP PI Sensor Control — PPG + FSR Sensing Firmware
+ * Custom nRF52840 board (cpap_pi_control/nrf52840, Raytac MDBT50Q-P1M)
  */
 
 #include <zephyr/kernel.h>
@@ -16,7 +16,7 @@ LOG_MODULE_REGISTER(cpap_pi_main, LOG_LEVEL_DBG);
 
 int main(void)
 {
-    printk("\n=== CPAP PI Sensor Body Boot ===\n");
+    printk("\n=== CPAP PI Sensor Control Boot ===\n");
 
     /* Status LEDs (LED1 = P1.08, LED2 = P1.09, active low) */
     if (drv_led_init() < 0) {
