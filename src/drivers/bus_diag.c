@@ -66,6 +66,21 @@ int bus_diag_scan_mux(void)
         }
     }
 
+    /* Detailed PPG probe: read the MAX30101 PART_ID register (0xFF,
+     * expect 0x15) on each PPG channel and report the exact error.
+     * -EIO = address NACK (device unpowered / bus wire broken).
+     */
+    for (uint8_t ch = 0; ch < 3; ch++) {
+        uint8_t id = 0;
+        int ret = i2c_reg_read_byte(mux_ch[ch], 0x57, 0xFF, &id);
+        if (ret == 0) {
+            LOG_INF("ppg%u (ch%u): PART_ID=0x%02X %s", ch + 1, ch, id,
+                    id == 0x15 ? "OK" : "UNEXPECTED");
+        } else {
+            LOG_ERR("ppg%u (ch%u): no response (err %d)", ch + 1, ch, ret);
+        }
+    }
+
     LOG_INF("mux scan: %d/4 expected sensors present", found_expected);
     return found_expected;
 }
