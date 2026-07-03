@@ -156,6 +156,13 @@
 				smp-sr = <100>;
 				led-pw = <411>;
 				fifo-rollover-en;
+				/* Red/IR reflect strongly off tissue — 51 mA (default)
+				 * saturates the ADC with a finger on the sensor. Green
+				 * is absorbed by hemoglobin and needs more drive.
+				 * 0.2 mA/LSB: R/IR = 6.2 mA, G = 25.4 mA.
+				 */
+				led-pa = [1f 1f 7f];
+				adc-rge = <16384>;
 			};
 		};
 
@@ -174,6 +181,13 @@
 				smp-sr = <100>;
 				led-pw = <411>;
 				fifo-rollover-en;
+				/* Red/IR reflect strongly off tissue — 51 mA (default)
+				 * saturates the ADC with a finger on the sensor. Green
+				 * is absorbed by hemoglobin and needs more drive.
+				 * 0.2 mA/LSB: R/IR = 6.2 mA, G = 25.4 mA.
+				 */
+				led-pa = [1f 1f 7f];
+				adc-rge = <16384>;
 			};
 		};
 
@@ -192,6 +206,13 @@
 				smp-sr = <100>;
 				led-pw = <411>;
 				fifo-rollover-en;
+				/* Red/IR reflect strongly off tissue — 51 mA (default)
+				 * saturates the ADC with a finger on the sensor. Green
+				 * is absorbed by hemoglobin and needs more drive.
+				 * 0.2 mA/LSB: R/IR = 6.2 mA, G = 25.4 mA.
+				 */
+				led-pa = [1f 1f 7f];
+				adc-rge = <16384>;
 			};
 		};
 
