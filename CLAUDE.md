@@ -79,6 +79,6 @@ i2c0 (TWIM0, to mux), spi1 (SPIM1, 6 cs-gpios), adc (SAADC AIN0-3), bunch of gpi
 - `src/comm/` — NUS transport (ble_manager) + frame batching (comm_manager); NUS RX: 'B' binary / 'J' JSON debug
 - `src/comm/rtt_stream.c` — same frames on RTT up-buffer 1, always on; PC side: `python scripts/rtt_bridge.py` → ws://localhost:8765 (stop other RTT sessions first)
 - `src/drivers/driver_ms5611.c` — MS5611 math (NOT ms5607 exponents); concurrent conversions
-- `Boards/.../board.c` — REGOUT0=3V3 UICR hook (high-voltage mode, do not remove; keep REG0 in LDO — no HV DCDC, L4 unpopulated)
+- `Boards/.../board.c` — UICR self-heal hook: REGOUT0=3V3 (high-voltage mode; keep REG0 in LDO — no HV DCDC, L4 unpopulated) + APPROTECT=0x5A on hardened silicon (else raw-J-Link-flashed boards lock out debug probes). Do not remove.
 - Flash with plain `west flash`; use `--recover` only for locked/wedged chips (wipes UICR + future stored data)
 - Web portal counterpart: `../CPAP_PI_portal` (binary frame parser in src/useComm.js)

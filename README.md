@@ -164,7 +164,20 @@ is lossless — use it as ground truth for validation recordings.
 - **FSR/ESS102**: TIA topology on this board gives
   R_fsr = 100 kΩ × VREF / (V_out − VREF), VREF = buffered 0.30 V
   measured on AIN3 (both rails sampled every tick).
-- **REGOUT0**: board.c programs UICR REGOUT0 = 3V3 on first boot after
-  any erase (high-voltage mode, pull-ups at 3.3 V). Use plain
-  `west flash` routinely; `--recover` wipes UICR and costs one
-  self-healing reboot.
+- **UICR self-healing (board.c)**: a chip erase destroys two UICR words
+  this board depends on, and the boot hook restores both:
+  - **REGOUT0 = 3V3** — high-voltage mode with 3.3 V pull-ups; the
+    1.8 V default breaks I2C/SPI levels (one self-healing reboot).
+  - **APPROTECT = HwDisabled (0x5A)** — on hardened silicon (rev 3 /
+    build code F0+) the erased value locks the debug port at every
+    boot. nrfutil/nrfjprog restore it when flashing, but raw J-Link
+    tools (nRF Connect Programmer with a bare zephyr.hex) do not —
+    the classic symptom is "firmware runs fine but no J-Link probe
+    can connect". The hook writes UICR and software-opens the branch
+    immediately; pre-rev-3 silicon (where 0x5A means the opposite) is
+    detected at runtime and left untouched.
+  Use plain `west flash` routinely; `--recover` wipes UICR and costs
+  one self-healing reboot. If a board is ever left *erased*, its SWD
+  runs at 1.8 V and 3.3 V-only probes (J-Link EDU Mini) cannot talk
+  to it — recover it with `west flash --recover` or any probe with
+  level-shifted I/O (the DK).
