@@ -10,7 +10,7 @@
 #include "drivers/bus_diag.h"
 #include "drivers/driver_led.h"
 #include "sensors/sensor_manager.h"
-#include "interface/ble_interface.h"
+#include "comm/comm_manager.h"
 
 LOG_MODULE_REGISTER(cpap_pi_main, LOG_LEVEL_DBG);
 
@@ -28,9 +28,9 @@ int main(void)
     int baro_ok = bus_diag_ms5611_check();
     printk("Bus diag: %d/4 I2C sensors, %d/6 baros OK\n", i2c_ok, baro_ok);
 
-    /* BLE GATT server — remote sampling-interval control */
-    if (ble_interface_init() < 0) {
-        LOG_ERR("Failed to init BLE");
+    /* BLE NUS transport + binary frame stream for the web portal */
+    if (comm_manager_init() < 0) {
+        LOG_ERR("Failed to init comm layer");
     }
 
     /* Sampling thread: PPG + FSR 100 Hz, baro 25 Hz, SHT40 1 Hz */

@@ -5,6 +5,13 @@
 
 #include "ppg_reader.h"
 
+/* One 10 ms sampling tick — the unit batched into BLE DATA frames. */
+struct tick_sample {
+    struct ppg_sample ppg[PPG_COUNT];
+    int16_t ff_mv[3];
+    int16_t vref_mv;
+};
+
 /* Latest values from every sensor, updated by the sampling thread. */
 struct system_sensor_data {
     /* PPG (MAX30101 x3, 100 Hz) */

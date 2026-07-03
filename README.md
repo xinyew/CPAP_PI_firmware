@@ -92,6 +92,23 @@ Notes:
   commonly 10–20 kB/s. Binary framing stays inside even the pessimistic end.
 - Decimate the *plot* to ~30 fps regardless; log the full rate, draw less.
 
+## BLE Stream Protocol
+
+Transport: **Nordic UART Service (NUS)**, advertising as `CPAP_PI_Control`
+(the web portal matches the `CPAP` name prefix). Full byte-level frame
+layout lives in `src/comm/comm_protocol.h`; summary:
+
+- **DATA frame** (176 B, 25/s): 4 batched 10 ms ticks — 3× PPG (R/IR/G
+  as u24 each), 4× FSR sample sets (i16 mV), 6× baro pressure (i32 Pa),
+  plus validity masks and a millisecond timestamp.
+- **STATUS frame** (41 B, 1/s): SHT40 temp/RH, 6× baro temperature,
+  3× FSR resistance, achieved rates, validity masks.
+- **Commands** (NUS RX, single byte): `B` = binary streaming (default),
+  `J` = 1 Hz eval-style JSON debug line.
+
+Requires ATT MTU ≥ 179 (browsers negotiate 247+; prj.conf enables
+DLE 251 / MTU 247). Web portal lives in `../CPAP_PI_portal`.
+
 ## Companion hardware
 
 - Control board schematic: `CPAP_PI_Sensor_Body.kicad_sch` (KiCad project name predates the _control rename)

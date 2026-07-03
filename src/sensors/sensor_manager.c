@@ -18,11 +18,13 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/logging/log.h>
+#include <string.h>
 
 #include "ppg_reader.h"
 #include "sht40_reader.h"
 #include "../drivers/driver_fsr.h"
 #include "../drivers/driver_ms5611.h"
+#include "../comm/comm_manager.h"
 
 LOG_MODULE_REGISTER(sensor_mgr, LOG_LEVEL_INF);
 
@@ -115,10 +117,13 @@ static void sensor_thread_fn(void *a, void *b, void *c)
     bool baro_pending = false;
 
     while (1) {
+        struct tick_sample ts = {0};
+
         /* PPG + FSR every tick (100 Hz) */
         if (ppg_reader_read(d->ppg) > 0) {
             ppg_cnt++;
         }
+        memcpy(ts.ppg, d->ppg, sizeof(ts.ppg));
 
         struct fsr_data fsr;
 
@@ -126,10 +131,15 @@ static void sensor_thread_fn(void *a, void *b, void *c)
             for (int i = 0; i < 3; i++) {
                 d->ff_mv[i] = fsr.ff_mv[i];
                 d->rfsr_ohm[i] = fsr_resistance(fsr.ff_mv[i], fsr.vref_mv);
+                ts.ff_mv[i] = (int16_t)fsr.ff_mv[i];
             }
             d->vref_mv = fsr.vref_mv;
+            ts.vref_mv = (int16_t)fsr.vref_mv;
             fsr_cnt++;
         }
+
+        /* Batch this tick into the BLE stream (no-op if disconnected) */
+        comm_manager_push_tick(&ts);
 
         /* MS5611: start on tick 0 mod 4, read on tick 1 mod 4 (10 ms
          * later > 4.6 ms conversion) -> 25 Hz. One cycle per second
@@ -167,6 +177,7 @@ static void sensor_thread_fn(void *a, void *b, void *c)
             d->baro_rate = baro_cnt;
             ppg_cnt = fsr_cnt = baro_cnt = 0;
             print_summary(seconds);
+            comm_manager_push_status();
         }
 
         k_msleep(TICK_MS);
