@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+    <channel>
+      <title>CPAP-PI Dev Notes</title>
+      <link>https://xinyew.github.io/CPAP_PI_firmware</link>
+      <description>Last 10 notes on CPAP-PI Dev Notes</description>
+      <generator>Quartz -- quartz.jzhao.xyz</generator>
+      <item>
+    <title>kamoamoa</title>
+    <link>https://xinyew.github.io/CPAP_PI_firmware/tags/kamoamoa</link>
+    <guid>https://xinyew.github.io/CPAP_PI_firmware/tags/kamoamoa</guid>
+    <description><![CDATA[  ]]></description>
+    <pubDate>Fri, 03 Jul 2026 18:38:02 GMT</pubDate>
+  </item><item>
+    <title>meeting</title>
+    <link>https://xinyew.github.io/CPAP_PI_firmware/tags/meeting</link>
+    <guid>https://xinyew.github.io/CPAP_PI_firmware/tags/meeting</guid>
+    <description><![CDATA[  ]]></description>
+    <pubDate>Fri, 03 Jul 2026 18:38:02 GMT</pubDate>
+  </item><item>
+    <title>cpap-pi</title>
+    <link>https://xinyew.github.io/CPAP_PI_firmware/tags/cpap-pi</link>
+    <guid>https://xinyew.github.io/CPAP_PI_firmware/tags/cpap-pi</guid>
+    <description><![CDATA[  ]]></description>
+    <pubDate>Fri, 03 Jul 2026 18:38:02 GMT</pubDate>
+  </item><item>
+    <title>hardware</title>
+    <link>https://xinyew.github.io/CPAP_PI_firmware/tags/hardware</link>
+    <guid>https://xinyew.github.io/CPAP_PI_firmware/tags/hardware</guid>
+    <description><![CDATA[  ]]></description>
+    <pubDate>Fri, 03 Jul 2026 18:38:02 GMT</pubDate>
+  </item><item>
+    <title>pcb-design</title>
+    <link>https://xinyew.github.io/CPAP_PI_firmware/tags/pcb-design</link>
+    <guid>https://xinyew.github.io/CPAP_PI_firmware/tags/pcb-design</guid>
+    <description><![CDATA[  ]]></description>
+    <pubDate>Fri, 03 Jul 2026 18:38:02 GMT</pubDate>
+  </item><item>
+    <title>2</title>
+    <link>https://xinyew.github.io/CPAP_PI_firmware/tags/2</link>
+    <guid>https://xinyew.github.io/CPAP_PI_firmware/tags/2</guid>
+    <description><![CDATA[  ]]></description>
+    <pubDate>Fri, 03 Jul 2026 18:38:02 GMT</pubDate>
+  </item><item>
+    <title>firmware</title>
+    <link>https://xinyew.github.io/CPAP_PI_firmware/tags/firmware</link>
+    <guid>https://xinyew.github.io/CPAP_PI_firmware/tags/firmware</guid>
+    <description><![CDATA[  ]]></description>
+    <pubDate>Fri, 03 Jul 2026 18:38:02 GMT</pubDate>
+  </item><item>
+    <title>Tag Index</title>
+    <link>https://xinyew.github.io/CPAP_PI_firmware/tags/</link>
+    <guid>https://xinyew.github.io/CPAP_PI_firmware/tags/</guid>
+    <description><![CDATA[  ]]></description>
+    <pubDate>Fri, 03 Jul 2026 18:38:02 GMT</pubDate>
+  </item><item>
+    <title>CPAP-PI — Dev Notes</title>
+    <link>https://xinyew.github.io/CPAP_PI_firmware/</link>
+    <guid>https://xinyew.github.io/CPAP_PI_firmware/</guid>
+    <description><![CDATA[ CPAP-PI is a small BLE multi-sensor data-acquisition board (with Won on hardware): an nRF52840 streaming PPG, FSR, MS5611 barometers, and an SHT40 temp/humidity sensor to a web portal over a compact binary protocol (BLE and wired RTT). ]]></description>
+    <pubDate>Fri, 03 Jul 2026 02:34:34 GMT</pubDate>
+  </item><item>
+    <title>20260702 - CPAP-PI - Sensor stack bringup and binary data pipeline</title>
+    <link>https://xinyew.github.io/CPAP_PI_firmware/20260702---cpap-pi---sensor-stack-bringup-and-binary-data-pipeline</link>
+    <guid>https://xinyew.github.io/CPAP_PI_firmware/20260702---cpap-pi---sensor-stack-bringup-and-binary-data-pipeline</guid>
+    <description><![CDATA[ 20260702 - CPAP-PI - Sensor stack bringup and binary data pipeline Full bringup of the CPAP-PI sensor stack and the firmware ↔ web-portal data pipeline. ]]></description>
+    <pubDate>Thu, 02 Jul 2026 04:00:00 GMT</pubDate>
+  </item>
+    </channel>
+  </rss>
