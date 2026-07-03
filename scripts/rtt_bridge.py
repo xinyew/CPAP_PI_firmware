@@ -24,7 +24,7 @@ import pylink
 import websockets
 
 MAGIC = 0xC9A5
-FRAME_LEN = {0x01: 176, 0x02: 41}  # type -> length (comm_protocol.h)
+FRAME_LEN = {0x01: 224, 0x02: 41}  # type -> length (comm_protocol.h)
 RTT_CHANNEL = 1
 
 clients = set()

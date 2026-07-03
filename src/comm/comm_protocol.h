@@ -18,8 +18,9 @@
  *    12  PPG block: sensor 0..2, sample 0..3: red, ir, green as u24
  *         = 3 x 4 x 3 x 3 B = 108 B (absent sensors zero-filled)
  *   120  FSR block: sample 0..3: ff1, ff2, ff3, vref as i16 mV = 32 B
- *   152  BARO block: baro 1..6 pressure as i32 Pa = 24 B
- *   176  total (fits one NUS notification at ATT MTU >= 179)
+ *   152  BARO block: sample 0..3, baro 1..6: pressure as u24 Pa
+ *         = 4 x 6 x 3 B = 72 B (baro samples at 100 Hz too)
+ *   224  total (fits one NUS notification at ATT MTU >= 227)
  *
  * STATUS frame — every 1 s:
  *
@@ -46,7 +47,7 @@
 #define COMM_TYPE_STATUS    0x02
 
 #define COMM_TICKS_PER_FRAME  4
-#define COMM_DATA_FRAME_LEN   176
+#define COMM_DATA_FRAME_LEN   224
 #define COMM_STATUS_FRAME_LEN 41
 
 #define COMM_CMD_BINARY     'B'

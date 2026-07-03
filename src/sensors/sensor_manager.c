@@ -139,31 +139,27 @@ static void sensor_thread_fn(void *a, void *b, void *c)
             fsr_cnt++;
         }
 
-        /* Batch this tick into the BLE stream (no-op if disconnected) */
-        comm_manager_push_tick(&ts);
-
-        /* MS5611: start on tick 0 mod 4, read on tick 1 mod 4 (10 ms
-         * later > 4.6 ms conversion) -> 25 Hz. One cycle per second
-         * converts temperature instead of pressure.
+        /* MS5611 at 100 Hz: every tick, read the conversion started on
+         * the previous tick (10 ms > 4.6 ms at OSR 2048) and start the
+         * next one. One cycle per second converts temperature instead;
+         * that tick reuses the previous pressure values.
          */
         if (d->baro_ok_mask != 0) {
-            uint32_t phase = tick % 4;
-
-            if (phase == 0) {
-                bool temp_cycle = (tick % TICKS_PER_SECOND) == 0;
-
-                baro_pending = (drv_ms5611_start_conv(temp_cycle) == 0);
-            } else if (phase == 1 && baro_pending) {
-                if (drv_ms5611_finish_conv() == 0) {
-                    for (int i = 0; i < 6; i++) {
-                        drv_ms5611_get(i, &d->baro_pa[i],
-                                       &d->baro_temp_c100[i]);
-                    }
-                    baro_cnt++;
+            if (baro_pending && drv_ms5611_finish_conv() == 0) {
+                for (int i = 0; i < 6; i++) {
+                    drv_ms5611_get(i, &d->baro_pa[i], &d->baro_temp_c100[i]);
                 }
-                baro_pending = false;
+                baro_cnt++;
             }
+
+            bool temp_cycle = (tick % TICKS_PER_SECOND) == 0;
+
+            baro_pending = (drv_ms5611_start_conv(temp_cycle) == 0);
         }
+        memcpy(ts.baro_pa, d->baro_pa, sizeof(ts.baro_pa));
+
+        /* Batch this tick into the BLE/RTT stream */
+        comm_manager_push_tick(&ts);
 
         /* SHT40 once per second (blocking ~8.3 ms) */
         if (d->sht_ok && (tick % TICKS_PER_SECOND) == 50) {

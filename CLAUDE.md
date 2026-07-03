@@ -64,7 +64,7 @@ $ & "~\Downloads\SimplicityCommander-Windows\SimplicityCommander-Windows\Command
 
 - PPG: 100 Hz/sensor (3-LED, 411 µs PW; ceiling ~200 Hz) — burst-drain FIFOs every 20–40 ms
 - FSR: 100 Hz (match PPG loop; SAADC is nowhere near limiting)
-- MS5611: 25–50 Hz all six at OSR 2048–4096 (start all 6 conversions concurrently, wait once, read all; T at 1 Hz). Ceiling ~100 Hz P-only
+- MS5611: 100 Hz all six at OSR 2048 (each tick: read previous conversion, start next; T at 1 Hz interleaved). Ceiling ~200 Hz at OSR 1024
 - SHT40: 1 Hz high-precision (self-heating — keep duty low)
 - BLE: binary-packed stream ≈ 5–6 kB/s fits NUS + DLE (20–40 kB/s practical; Web Bluetooth portals often only 10–20 kB/s). Batch 25–50 ms per notification. JSON @100 Hz does NOT fit — debug mode only.
 
@@ -75,7 +75,7 @@ i2c0 (TWIM0, to mux), spi1 (SPIM1, 6 cs-gpios), adc (SAADC AIN0-3), bunch of gpi
 ## Code map (see README for details)
 
 - `src/sensors/sensor_manager.c` — 10 ms sampling thread: PPG+FSR 100 Hz, baro 25 Hz, SHT 1 Hz; prints 1 Hz RTT summary; feeds comm layer per tick
-- `src/comm/comm_protocol.h` — binary frame spec (DATA 176 B @25/s, STATUS 41 B @1/s); portal parser must match this file
+- `src/comm/comm_protocol.h` — binary frame spec (DATA 224 B @25/s, STATUS 41 B @1/s); portal parser AND scripts/rtt_bridge.py FRAME_LEN must match this file
 - `src/comm/` — NUS transport (ble_manager) + frame batching (comm_manager); NUS RX: 'B' binary / 'J' JSON debug
 - `src/comm/rtt_stream.c` — same frames on RTT up-buffer 1, always on; PC side: `python scripts/rtt_bridge.py` → ws://localhost:8765 (stop other RTT sessions first)
 - `src/drivers/driver_ms5611.c` — MS5611 math (NOT ms5607 exponents); concurrent conversions

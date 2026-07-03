@@ -69,7 +69,7 @@ sharing one SPI bus, FSRs on the SAADC):
 |---|---|---|---|
 | PPG (MAX30101 ×3) | **100 Hz** each | ~200 Hz each | Sensor-side: 3-LED mode needs the 411 µs pulse width for SNR; I2C load at 100 Hz is only ~2.7 kB/s (<10% of the 400 kHz bus incl. mux switches) |
 | FSR (ESS102 ×3 + VREF) | **100 Hz** (match PPG) | ~1 kHz+ | SAADC is 200 kSPS; signal content (respiration, mask shifts) is only a few Hz — faster sampling just plots noise |
-| Baro (MS5611 ×6) | **25–50 Hz** all six | ~100 Hz all six (P-only, T at 1 Hz); ~200 Hz at OSR 1024 | Conversion time (9.04 ms at OSR 4096), NOT SPI — all six chips convert simultaneously. Prefer high OSR (0.012 mbar RMS) over speed for contact pressure |
+| Baro (MS5611 ×6) | **100 Hz** all six (current setting: OSR 2048, T at 1 Hz interleaved) | ~200 Hz at OSR 1024 | Conversion time (4.5 ms at OSR 2048), NOT SPI — all six chips convert simultaneously; read previous + start next every 10 ms tick |
 | SHT40 | **1 Hz** high-precision | — | Micro-climate drifts over seconds; hard polling self-heats the sensor |
 
 Notes:
@@ -98,15 +98,15 @@ Transport: **Nordic UART Service (NUS)**, advertising as `CPAP_PI_Control`
 (the web portal matches the `CPAP` name prefix). Full byte-level frame
 layout lives in `src/comm/comm_protocol.h`; summary:
 
-- **DATA frame** (176 B, 25/s): 4 batched 10 ms ticks — 3× PPG (R/IR/G
-  as u24 each), 4× FSR sample sets (i16 mV), 6× baro pressure (i32 Pa),
-  plus validity masks and a millisecond timestamp.
+- **DATA frame** (224 B, 25/s): 4 batched 10 ms ticks — per tick: 3× PPG
+  (R/IR/G as u24 each), FSR set (i16 mV ×4), and 6× baro pressure
+  (u24 Pa, 100 Hz) — plus validity masks and a millisecond timestamp.
 - **STATUS frame** (41 B, 1/s): SHT40 temp/RH, 6× baro temperature,
   3× FSR resistance, achieved rates, validity masks.
 - **Commands** (NUS RX, single byte): `B` = binary streaming (default),
   `J` = 1 Hz eval-style JSON debug line.
 
-Requires ATT MTU ≥ 179 (browsers negotiate 247+; prj.conf enables
+Requires ATT MTU ≥ 227 (browsers negotiate 247+; prj.conf enables
 DLE 251 / MTU 247). Web portal lives in `../CPAP_PI_portal`.
 
 ## Wired stream (RTT)

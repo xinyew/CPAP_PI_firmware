@@ -149,9 +149,16 @@ static void build_data_frame(void)
         q += 8;
     }
 
-    for (int i = 0; i < 6; i++) {
-        put_u32(q, (uint32_t)d->baro_pa[i]);
-        q += 4;
+    /* Baro at 100 Hz: one sample set per tick, u24 Pa (ambient ~98 kPa
+     * fits with 170x headroom; negative clamped to 0)
+     */
+    for (int k = 0; k < COMM_TICKS_PER_FRAME; k++) {
+        for (int i = 0; i < 6; i++) {
+            int32_t pa = acc[k].baro_pa[i];
+
+            put_u24(q, pa < 0 ? 0 : (uint32_t)pa);
+            q += 3;
+        }
     }
 }
 

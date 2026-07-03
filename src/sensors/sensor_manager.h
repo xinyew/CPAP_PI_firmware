@@ -10,6 +10,7 @@ struct tick_sample {
     struct ppg_sample ppg[PPG_COUNT];
     int16_t ff_mv[3];
     int16_t vref_mv;
+    int32_t baro_pa[6];   /* baro also samples per tick (100 Hz) */
 };
 
 /* Latest values from every sensor, updated by the sampling thread. */
