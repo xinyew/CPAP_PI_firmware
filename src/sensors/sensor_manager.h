@@ -17,6 +17,8 @@ typedef struct {
     float    force_res_ohm; /* Calculated FSR Resistance */
     float    temp_c;
     float    humidity_rh;
+    float    pressure_mbar;
+    float    ms5611_temp_c;
 } system_sensor_data_t;
 
 extern system_sensor_data_t current_sensor_data;
@@ -31,6 +33,8 @@ typedef struct {
     uint32_t (*get_interval_ms)(void);
     uint32_t last_read_time_ms;
 } sensor_interface_t;
+
+extern sensor_interface_t ms5611_sensor;
 
 int sensor_manager_init(void);
 void sensor_manager_poll(void);

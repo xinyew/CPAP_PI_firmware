@@ -8,6 +8,10 @@ target_include_directories(app PRIVATE
     src/arduino_compat
     src/sensors/max30101/EmotiBit_MAX30101/src
     src/sensors/sht40/MR01Right_SHT40/src
+    src/sensors/ms5611
+    src/sensors/ms5611/libdriver_ms5611/src
+    src/sensors/ms5611/libdriver_ms5611/interface
+    src/sensors/ms5611/libdriver_ms5611/example
 )
 
 target_sources(app PRIVATE 
@@ -20,6 +24,10 @@ target_sources(app PRIVATE
     src/sensors/sht40/sht40_reader.cpp
     src/sensors/sht40/MR01Right_SHT40/src/SHT40.cpp
     src/sensors/ess102/ess102_reader.c
+    src/sensors/ms5611/libdriver_ms5611/src/driver_ms5611.c
+    src/sensors/ms5611/libdriver_ms5611/example/driver_ms5611_basic.c
+    src/sensors/ms5611/driver_ms5611_interface.c
+    src/sensors/ms5611/ms5611_reader.c
     src/comm/comm_manager.c
     src/comm/ble_manager.c
 )
