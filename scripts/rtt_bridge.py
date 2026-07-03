@@ -23,6 +23,18 @@ import sys
 import pylink
 import websockets
 
+# There are TWO packages on PyPI that install as `import pylink`: the SEGGER
+# J-Link binding we need is `pylink-square` (provides pylink.JLink); the
+# unrelated `PyLink` "File-Like API" package shadows the name and has no JLink.
+# If the wrong one is installed the bridge dies with a cryptic AttributeError,
+# so fail loudly with the fix instead.
+if not hasattr(pylink, "JLink"):
+    sys.exit(
+        "ERROR: the installed 'pylink' is the wrong package (no pylink.JLink).\n"
+        "       Fix with:  pip uninstall -y pylink && pip install pylink-square\n"
+        f"       (using: {getattr(pylink, '__file__', '?')})"
+    )
+
 MAGIC = 0xC9A5
 FRAME_LEN = {0x01: 224, 0x02: 41}  # type -> length (comm_protocol.h)
 RTT_CHANNEL = 1
@@ -105,14 +117,27 @@ async def main():
     jlink.rtt_start()
     print(f"[bridge] RTT attached to {args.device}", flush=True)
 
-    # Wait for the RTT control block / channel 1 to be discovered
+    # Wait for the RTT control block, then confirm up-buffer 1 is the firmware's
+    # "data" channel. rtt_get_num_up_buffers() returns the compile-time MAX (3),
+    # not how many are configured, so it can't tell us the channel is live —
+    # read the buffer descriptor's name instead.
+    named = False
     for _ in range(50):
         try:
-            if jlink.rtt_get_num_up_buffers() > RTT_CHANNEL:
+            desc = jlink.rtt_get_buf_descriptor(RTT_CHANNEL, up=True)
+            if desc.name:
+                print(f"[bridge] up-buffer {RTT_CHANNEL} = "
+                      f"'{desc.name}' ({desc.SizeOfBuffer} B)", flush=True)
+                named = True
                 break
-        except pylink.errors.JLinkRTTException:
+        except (pylink.errors.JLinkRTTException, AttributeError):
             pass
         await asyncio.sleep(0.1)
+    if not named:
+        print(f"[bridge] WARNING: up-buffer {RTT_CHANNEL} not found/named. "
+              "Is the firmware the RTT-streaming build (main branch), running, "
+              "and past sensor bring-up? Streaming anyway; watch 'kB read'.",
+              flush=True)
 
     async with websockets.serve(handler, "localhost", args.port):
         print(f"[bridge] serving ws://localhost:{args.port}", flush=True)
