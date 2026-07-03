@@ -10,6 +10,10 @@ target_sources(app PRIVATE
     src/drivers/bus_diag.c
     src/drivers/driver_fsr.c
     src/drivers/driver_led.c
+    src/drivers/driver_ms5611.c
+    src/sensors/sensor_manager.c
+    src/sensors/ppg_reader.c
+    src/sensors/sht40_reader.c
     src/interface/ble_interface.c
 )
 # target_sources(app PRIVATE src/myfunc.c)
