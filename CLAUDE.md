@@ -71,3 +71,13 @@ $ & "~\Downloads\SimplicityCommander-Windows\SimplicityCommander-Windows\Command
 ## SOC components to use
 i2c0 (TWIM0, to mux), spi1 (SPIM1, 6 cs-gpios), adc (SAADC AIN0-3), bunch of gpios.
 32.768 kHz crystal fitted → K32SRC_XTAL. NOTE: i2c0 must not be used together with spi0, and i2c1 not with spi1 (shared peripheral IDs).
+
+## Code map (see README for details)
+
+- `src/sensors/sensor_manager.c` — 10 ms sampling thread: PPG+FSR 100 Hz, baro 25 Hz, SHT 1 Hz; prints 1 Hz RTT summary; feeds comm layer per tick
+- `src/comm/comm_protocol.h` — binary frame spec (DATA 176 B @25/s, STATUS 41 B @1/s); portal parser must match this file
+- `src/comm/` — NUS transport (ble_manager) + frame batching (comm_manager); NUS RX: 'B' binary / 'J' JSON debug
+- `src/drivers/driver_ms5611.c` — MS5611 math (NOT ms5607 exponents); concurrent conversions
+- `Boards/.../board.c` — REGOUT0=3V3 UICR hook (high-voltage mode, do not remove; keep REG0 in LDO — no HV DCDC, L4 unpopulated)
+- Flash with plain `west flash`; use `--recover` only for locked/wedged chips (wipes UICR + future stored data)
+- Web portal counterpart: `../CPAP_PI_portal` (binary frame parser in src/useComm.js)

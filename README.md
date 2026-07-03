@@ -114,13 +114,42 @@ DLE 251 / MTU 247). Web portal lives in `../CPAP_PI_portal`.
 - Control board schematic: `CPAP_PI_Sensor_Body.kicad_sch` (KiCad project name predates the _control rename)
 - Mask flex PCB schematic: `CPAP_PI_Sensor_Mask.kicad_sch` — carries all sensors listed above
 
-## src dir structure (beginning)
+## src dir structure
 ├── src/
-│   ├── main.c
+│   ├── main.c                            # boot diag, LED heartbeat, thread startup
 │   ├── drivers/
-│   │   ├── driver_tca9548a.c/h           # I2C mux channel select/reset
-│   │   ├── driver_fsr.c/h                # SAADC force-sensor sampling
-│   │   ├── driver_led.c/h                # Status LEDs
-│   │   └── ... other drivers
-│   └── interface/
-│       └── ble_interface.c/h             # GATT server, sampling control
+│   │   ├── bus_diag.c/h                  # boot-time mux scan + MS5611 PROM CRC check
+│   │   ├── driver_fsr.c/h                # SAADC FF1-3 + VREF (adc_dt_spec from DT)
+│   │   ├── driver_led.c/h                # status LEDs (LED1 heartbeat, LED2 BLE)
+│   │   └── driver_ms5611.c/h             # 6x MS5611 SPI, concurrent conversions
+│   ├── sensors/
+│   │   ├── sensor_manager.c/h            # 10 ms sampling thread, rate scheduling
+│   │   ├── ppg_reader.c/h                # 3x MAX30101 via in-tree Zephyr driver
+│   │   └── sht40_reader.c/h              # SHT40 via in-tree sht4x driver
+│   └── comm/
+│       ├── comm_protocol.h               # binary frame format (single source of truth)
+│       ├── ble_manager.c/h               # NUS transport, advertising, LED2
+│       └── comm_manager.c/h              # tick batching, frame build, mode commands
+
+## Driver notes
+
+- **MAX30101**: in-tree Zephyr driver; all acquisition config (multi-LED
+  slots, 100 Hz, 411 us PW, LED currents, ADC range) lives in the board
+  DTS. Red/IR run at 6.2 mA and green at 25.4 mA — 51 mA saturates the
+  18-bit ADC on skin contact. Absent sensors are skipped at boot and
+  rejoin after fix + reboot. Shared PPG_INT means polled FIFO, not IRQs.
+- **MS5611**: project driver (no in-tree support). MS5611 compensation
+  exponents differ from the in-tree MS5607 (OFF 2^16, SENS 2^15) and
+  second-order temperature compensation is included. Conversions start
+  on all six concurrently (one 4.6 ms wait covers the bus) — that is
+  what makes 25 Hz x6 cheap. PROM CRC-4 (AN520) gates each sensor in.
+- **TCA9548A / SHT4x**: in-tree drivers; each mux channel is a real I2C
+  bus device (init priority: controller 50 < mux root 60 < channels 70
+  < sensors 80).
+- **FSR/ESS102**: TIA topology on this board gives
+  R_fsr = 100 kΩ × VREF / (V_out − VREF), VREF = buffered 0.30 V
+  measured on AIN3 (both rails sampled every tick).
+- **REGOUT0**: board.c programs UICR REGOUT0 = 3V3 on first boot after
+  any erase (high-voltage mode, pull-ups at 3.3 V). Use plain
+  `west flash` routinely; `--recover` wipes UICR and costs one
+  self-healing reboot.
