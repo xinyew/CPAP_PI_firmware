@@ -115,6 +115,7 @@ static void sensor_thread_fn(void *a, void *b, void *c)
     uint32_t seconds = 0;
     uint32_t ppg_cnt = 0, fsr_cnt = 0, baro_cnt = 0;
     bool baro_pending = false;
+    int64_t next_wake = k_uptime_get();
 
     while (1) {
         struct tick_sample ts = {0};
@@ -180,7 +181,16 @@ static void sensor_thread_fn(void *a, void *b, void *c)
             comm_manager_push_status();
         }
 
-        k_msleep(TICK_MS);
+        /* Absolute-deadline scheduling: the tick period stays 10 ms
+         * regardless of how long the bus work took (k_msleep after
+         * ~4 ms of work would stretch the tick to ~14 ms). If a tick
+         * overruns (e.g. the 8.3 ms SHT40 read), skip ahead.
+         */
+        next_wake += TICK_MS;
+        if (next_wake <= k_uptime_get()) {
+            next_wake = k_uptime_get() + TICK_MS;
+        }
+        k_sleep(K_TIMEOUT_ABS_MS(next_wake));
     }
 }
 

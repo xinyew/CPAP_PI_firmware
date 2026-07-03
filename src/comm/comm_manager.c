@@ -1,17 +1,21 @@
 /*
  * Comm manager — batches sensor ticks into binary DATA frames (40 ms,
- * see comm_protocol.h), emits a 1 Hz STATUS frame, and handles the
- * NUS RX command byte. Frames are sent from the system workqueue so
- * the sensor thread never blocks on BLE.
+ * see comm_protocol.h) and a 1 Hz STATUS frame, fanned out to two
+ * transports:
  *
- * JSON debug mode ('J'): instead of binary frames, a 1 Hz eval-style
- * JSON line (first live PPG + FSR ch1 + first live baro) for humans
- * poking at the stream with a phone app.
+ *   - RTT up-buffer 1 (wired, always on, lossless with a probe reading)
+ *   - BLE NUS (when connected; frames sent from the system workqueue
+ *     so the sensor thread never blocks on radio; dropped if in flight)
+ *
+ * NUS RX command byte: 'B' binary (default) / 'J' JSON debug — the
+ * JSON mode replaces the BLE stream with a 1 Hz eval-style line; the
+ * RTT stream stays binary regardless.
  */
 
 #include "comm_manager.h"
 #include "comm_protocol.h"
 #include "ble_manager.h"
+#include "rtt_stream.h"
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -34,12 +38,15 @@ static uint8_t seq;
 static struct tick_sample acc[COMM_TICKS_PER_FRAME];
 static int acc_n;
 
-/* One pending buffer per frame type; a frame is dropped if the
- * previous one of its type is still in flight.
+/* Frames are built in the sensor thread (also fed to RTT), then
+ * snapshotted into per-transport buffers for the BLE workqueue.
+ * A BLE frame is dropped if the previous one is still in flight.
  */
-static uint8_t data_buf[COMM_DATA_FRAME_LEN];
-static uint8_t status_buf[COMM_STATUS_FRAME_LEN > 128 ? COMM_STATUS_FRAME_LEN : 128];
-static uint16_t status_len;
+static uint8_t frame_buf[COMM_DATA_FRAME_LEN];
+static uint8_t status_frame_buf[COMM_STATUS_FRAME_LEN];
+static uint8_t ble_data_buf[COMM_DATA_FRAME_LEN];
+static uint8_t ble_status_buf[128];
+static uint16_t ble_status_len;
 static atomic_t data_busy;
 static atomic_t status_busy;
 static uint32_t dropped_frames;
@@ -70,14 +77,14 @@ static inline void put_u32(uint8_t *p, uint32_t v)
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Send work                                                                 */
+/*  BLE send work                                                             */
 /* -------------------------------------------------------------------------- */
 
 static void send_data_work_fn(struct k_work *work)
 {
     ARG_UNUSED(work);
 
-    if (ble_manager_send(data_buf, COMM_DATA_FRAME_LEN) < 0) {
+    if (ble_manager_send(ble_data_buf, COMM_DATA_FRAME_LEN) < 0) {
         dropped_frames++;
     }
     atomic_set(&data_busy, 0);
@@ -87,7 +94,7 @@ static void send_status_work_fn(struct k_work *work)
 {
     ARG_UNUSED(work);
 
-    if (ble_manager_send(status_buf, status_len) < 0) {
+    if (ble_manager_send(ble_status_buf, ble_status_len) < 0) {
         dropped_frames++;
     }
     atomic_set(&status_busy, 0);
@@ -100,14 +107,9 @@ static K_WORK_DEFINE(send_status_work, send_status_work_fn);
 /*  Frame builders                                                            */
 /* -------------------------------------------------------------------------- */
 
-static void build_and_send_data_frame(void)
+static void build_data_frame(void)
 {
-    if (atomic_cas(&data_busy, 0, 1) == false) {
-        dropped_frames++;
-        return;  /* previous frame still in flight */
-    }
-
-    uint8_t *p = data_buf;
+    uint8_t *p = frame_buf;
     struct system_sensor_data *d = &g_sensor_data;
     uint8_t ppg_mask = 0;
 
@@ -151,17 +153,11 @@ static void build_and_send_data_frame(void)
         put_u32(q, (uint32_t)d->baro_pa[i]);
         q += 4;
     }
-
-    k_work_submit(&send_data_work);
 }
 
-static void build_and_send_status_frame(void)
+static void build_status_frame(void)
 {
-    if (atomic_cas(&status_busy, 0, 1) == false) {
-        return;
-    }
-
-    uint8_t *p = status_buf;
+    uint8_t *p = status_frame_buf;
     struct system_sensor_data *d = &g_sensor_data;
     uint8_t ppg_mask = 0;
 
@@ -188,12 +184,9 @@ static void build_and_send_status_frame(void)
     p[38] = (uint8_t)MIN(d->baro_rate, 255U);
     p[39] = ppg_mask;
     p[40] = d->baro_ok_mask;
-
-    status_len = COMM_STATUS_FRAME_LEN;
-    k_work_submit(&send_status_work);
 }
 
-static void build_and_send_json_line(void)
+static void ble_send_json_line(void)
 {
     if (atomic_cas(&status_busy, 0, 1) == false) {
         return;
@@ -217,7 +210,7 @@ static void build_and_send_json_line(void)
         }
     }
 
-    int len = snprintf((char *)status_buf, sizeof(status_buf),
+    int len = snprintf((char *)ble_status_buf, sizeof(ble_status_buf),
                        "{\"r\":%u,\"i\":%u,\"g\":%u,\"f\":%d,\"v\":%d,"
                        "\"res\":%d,\"t\":%d.%02d,\"h\":%d.%02d,"
                        "\"p\":%d.%02d,\"pt\":%d.%02d}\n",
@@ -229,7 +222,7 @@ static void build_and_send_json_line(void)
                        (int)(press_pa / 100), (int)(press_pa % 100),
                        (int)(ptemp / 100), (int)(ptemp % 100));
 
-    status_len = MIN((uint16_t)len, (uint16_t)sizeof(status_buf));
+    ble_status_len = MIN((uint16_t)len, (uint16_t)sizeof(ble_status_buf));
     k_work_submit(&send_status_work);
 }
 
@@ -239,28 +232,43 @@ static void build_and_send_json_line(void)
 
 void comm_manager_push_tick(const struct tick_sample *tick)
 {
-    if (!ble_manager_can_send() || mode != COMM_MODE_BINARY) {
-        acc_n = 0;
+    acc[acc_n++] = *tick;
+    if (acc_n < COMM_TICKS_PER_FRAME) {
         return;
     }
+    acc_n = 0;
 
-    acc[acc_n++] = *tick;
-    if (acc_n >= COMM_TICKS_PER_FRAME) {
-        build_and_send_data_frame();
-        acc_n = 0;
+    build_data_frame();
+
+    /* Wired stream: always (skipped in hardware when nobody reads) */
+    rtt_stream_write(frame_buf, COMM_DATA_FRAME_LEN);
+
+    /* BLE: only when connected, subscribed and in binary mode */
+    if (ble_manager_can_send() && mode == COMM_MODE_BINARY) {
+        if (atomic_cas(&data_busy, 0, 1)) {
+            memcpy(ble_data_buf, frame_buf, COMM_DATA_FRAME_LEN);
+            k_work_submit(&send_data_work);
+        } else {
+            dropped_frames++;
+        }
     }
 }
 
 void comm_manager_push_status(void)
 {
+    build_status_frame();
+    rtt_stream_write(status_frame_buf, COMM_STATUS_FRAME_LEN);
+
     if (!ble_manager_can_send()) {
         return;
     }
 
     if (mode == COMM_MODE_JSON) {
-        build_and_send_json_line();
-    } else {
-        build_and_send_status_frame();
+        ble_send_json_line();
+    } else if (atomic_cas(&status_busy, 0, 1)) {
+        memcpy(ble_status_buf, status_frame_buf, COMM_STATUS_FRAME_LEN);
+        ble_status_len = COMM_STATUS_FRAME_LEN;
+        k_work_submit(&send_status_work);
     }
 }
 
@@ -287,5 +295,6 @@ static void on_rx(const uint8_t *data, uint16_t len)
 
 int comm_manager_init(void)
 {
+    rtt_stream_init();
     return ble_manager_init(on_rx);
 }

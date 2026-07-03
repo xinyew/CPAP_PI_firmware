@@ -109,6 +109,21 @@ layout lives in `src/comm/comm_protocol.h`; summary:
 Requires ATT MTU ≥ 179 (browsers negotiate 247+; prj.conf enables
 DLE 251 / MTU 247). Web portal lives in `../CPAP_PI_portal`.
 
+## Wired stream (RTT)
+
+The same binary frames are always written to **SEGGER RTT up-buffer 1**
+("data"; buffer 0 remains the console). Non-blocking: with no probe
+reading, bytes are skipped at zero cost. This is the wired path — the
+board has no USB, so there is no UART/serial option.
+
+    pip install pylink-square websockets
+    python scripts/rtt_bridge.py        # RTT -> ws://localhost:8765
+
+The portal's "RTT (wired)" mode connects to that WebSocket. The bridge
+needs the J-Link probe and must not run at the same time as another
+RTT session (commander-cli / RTT Viewer). Unlike BLE, the RTT stream
+is lossless — use it as ground truth for validation recordings.
+
 ## Companion hardware
 
 - Control board schematic: `CPAP_PI_Sensor_Body.kicad_sch` (KiCad project name predates the _control rename)

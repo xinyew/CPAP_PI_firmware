@@ -16,6 +16,7 @@ target_sources(app PRIVATE
     src/sensors/sht40_reader.c
     src/comm/ble_manager.c
     src/comm/comm_manager.c
+    src/comm/rtt_stream.c
 )
 # target_sources(app PRIVATE src/myfunc.c)
 target_sources_ifdef(CONFIG_MYFUNC app PRIVATE src/myfunc.c)
